@@ -3,7 +3,6 @@ const nextConfig = {
   images: {
     domains: [],
     unoptimized: false,
-    // Отключаем кеширование изображений в dev режиме
     minimumCacheTTL: 0,
   },
 }
