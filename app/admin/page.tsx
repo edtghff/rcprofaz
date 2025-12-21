@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 interface ContactFormData {
   name: string
@@ -13,54 +12,106 @@ interface ContactFormData {
 }
 
 export default function AdminPage() {
-  const router = useRouter()
   const [contacts, setContacts] = useState<ContactFormData[]>([])
   const [loading, setLoading] = useState(true)
   const [password, setPassword] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
   const [error, setError] = useState('')
 
-  const ADMIN_PASSWORD = 'rcprof2025' // Change this to a secure password
-
   useEffect(() => {
-    // Check if already authenticated
-    const authStatus = localStorage.getItem('admin_authenticated')
-    if (authStatus === 'true') {
-      setAuthenticated(true)
-      fetchContacts()
-    } else {
-      setLoading(false)
-    }
+    // Check authentication on server
+    checkAuth()
   }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true)
-      localStorage.setItem('admin_authenticated', 'true')
-      setError('')
-      fetchContacts()
-    } else {
-      setError('Yanlış şifrə')
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/admin/auth')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.authenticated) {
+          setAuthenticated(true)
+          fetchContacts()
+        } else {
+          setLoading(false)
+        }
+      } else {
+        setLoading(false)
+      }
+    } catch (error) {
+      console.error('Auth check error:', error)
+      setLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    setAuthenticated(false)
-    localStorage.removeItem('admin_authenticated')
-    setPassword('')
-    setContacts([])
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    
+    try {
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setAuthenticated(true)
+          setPassword('')
+          fetchContacts()
+        } else {
+          setError('Yanlış şifrə')
+        }
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Yanlış şifrə')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setError('Xəta baş verdi. Yenidən cəhd edin.')
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      // Clear cookie by setting it to expire
+      document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      setAuthenticated(false)
+      setPassword('')
+      setContacts([])
+    } catch (error) {
+      console.error('Logout error:', error)
+      setAuthenticated(false)
+      setPassword('')
+      setContacts([])
+    }
   }
 
   const fetchContacts = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/contact')
+      const response = await fetch('/api/admin/contacts', {
+        credentials: 'include', // Include cookies
+      })
+      
+      if (response.status === 401) {
+        // Not authenticated, redirect to login
+        setAuthenticated(false)
+        setLoading(false)
+        return
+      }
+      
       if (response.ok) {
         const data = await response.json()
         setContacts(data.contacts || [])
       } else {
         console.error('Failed to fetch contacts')
+        if (response.status === 401) {
+          setAuthenticated(false)
+        }
       }
     } catch (error) {
       console.error('Error fetching contacts:', error)
