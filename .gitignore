@@ -37,3 +37,6 @@ next-env.d.ts
 # исходники изображений (не нужны в git)
 /images/
 
+# данные заявок (не нужны в git)
+/data/contacts.json
+

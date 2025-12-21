@@ -32,7 +32,7 @@ export default function Header() {
           <Link href="/" className="flex items-center group transition-opacity hover:opacity-80">
             <div className="h-24 w-auto flex items-center">
               <Image
-                src="/images/logo.png"
+                src="/images/logo2.png"
                 alt="RC PROF Logo"
                 width={240}
                 height={120}

@@ -52,6 +52,7 @@ export default function AboutPage() {
                 alt="RC PROF Komanda"
                 fill
                 className="object-cover"
+                unoptimized={process.env.NODE_ENV === 'development'}
               />
             </div>
           </div>

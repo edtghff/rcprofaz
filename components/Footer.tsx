@@ -13,12 +13,11 @@ export default function Footer() {
               <Link href="/" className="inline-block transition-opacity hover:opacity-80">
                 <div className="h-20 w-auto flex items-center">
                   <Image
-                    src="/images/logo.png"
+                    src="/images/logo2.png"
                     alt="RC PROF Logo"
                     width={200}
                     height={100}
                     className="h-20 w-auto object-contain"
-                    style={{ filter: 'brightness(0) invert(1)' }}
                   />
                 </div>
               </Link>

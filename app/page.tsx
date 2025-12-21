@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { servicesData } from '@/data/servicesData'
 import { productsData } from '@/data/productsData'
+import ContactFormSection from '@/components/ContactFormSection'
 
 export const metadata = {
   title: 'RC PROF — Tikinti, Təmir, Dizayn, Lift, Qapı və Şüşə Sistemləri',
@@ -33,13 +34,13 @@ export default function Home() {
             <div className="mb-6">
               <div className="w-16 h-px bg-gray-900 mb-4"></div>
             </div>
-            <h1 className="text-6xl md:text-7xl font-medium mb-8 tracking-tight leading-tight text-gray-900">
+            <h1 className="text-6xl md:text-7xl font-medium mb-8 tracking-tight leading-tight text-gray-900 animate-slide-up">
               RC PROF
             </h1>
-            <p className="text-xl md:text-2xl mb-10 text-gray-600 font-light leading-relaxed">
+            <p className="text-xl md:text-2xl mb-10 text-gray-600 font-light leading-relaxed animate-slide-up animate-delay-100">
               Tikinti • Təmir • Dizayn • Lift • Qapı • Şüşə Sistemləri
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 animate-slide-up animate-delay-200">
               <Link href="/elaqe" className="btn-primary inline-flex items-center justify-center">
                 Əlaqə
               </Link>
@@ -55,7 +56,7 @@ export default function Home() {
       <section className="py-16 bg-white border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
+            <div className="animate-slide-in-left">
               <div className="mb-6">
                 <div className="w-12 h-px bg-gray-900 mb-4"></div>
                 <h2 className="text-4xl md:text-5xl font-medium text-gray-900 mb-5 tracking-tight">
@@ -83,12 +84,13 @@ export default function Home() {
                 </svg>
               </Link>
             </div>
-            <div className="relative h-[450px] bg-gray-100 overflow-hidden border border-gray-200">
+            <div className="relative h-[450px] bg-gray-100 overflow-hidden border border-gray-200 animate-slide-in-right">
               <Image
                 src="/images/about-preview.jpg"
                 alt="RC PROF Haqqımızda"
                 fill
                 className="object-cover"
+                unoptimized={process.env.NODE_ENV === 'development'}
               />
             </div>
           </div>
@@ -118,11 +120,12 @@ export default function Home() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {servicesData.slice(0, 4).map((service) => (
+            {servicesData.slice(0, 4).map((service, index) => (
               <Link
                 key={service.slug}
                 href={`/xidmetler/${service.slug}`}
-                className="card card-hover group overflow-hidden"
+                className="card card-hover group overflow-hidden animate-slide-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative h-48 bg-gray-200 overflow-hidden">
                   <Image
@@ -180,7 +183,7 @@ export default function Home() {
               'Vaxtında və dəqiq icra',
               'Müştəri məmnuniyyəti',
             ].map((item, index) => (
-              <div key={index} className="text-center p-6 bg-white hover:bg-gray-50 transition-colors border border-gray-200">
+              <div key={index} className="text-center p-6 bg-white hover:bg-gray-50 transition-colors border border-gray-200 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <div className="w-12 h-12 bg-gray-900 flex items-center justify-center mx-auto mb-4">
                   <svg
                     className="w-5 h-5 text-white"
@@ -226,11 +229,12 @@ export default function Home() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {productsData.slice(0, 4).map((product) => (
+            {productsData.slice(0, 4).map((product, index) => (
               <Link
                 key={product.slug}
                 href={`/mehsullarimiz/${product.slug}`}
-                className="card card-hover group overflow-hidden"
+                className="card card-hover group overflow-hidden animate-slide-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative h-56 bg-gray-200 overflow-hidden">
                   <Image
@@ -255,6 +259,23 @@ export default function Home() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Contact Form & Map Section */}
+      <section className="py-16 bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <div className="w-12 h-px bg-gray-900 mb-4"></div>
+            <h2 className="text-4xl md:text-5xl font-medium text-gray-900 mb-4 tracking-tight">
+              Bizimlə əlaqə saxlayın
+            </h2>
+            <p className="text-lg text-gray-600 font-light">
+              Layihəniz üçün pulsuz konsultasiya əldə edin
+            </p>
+          </div>
+          
+          <ContactFormSection />
         </div>
       </section>
     </>

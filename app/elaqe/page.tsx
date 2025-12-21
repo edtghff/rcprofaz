@@ -12,19 +12,40 @@ export default function ContactPage() {
   })
   const [submitted, setSubmitted] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Client-side validation
     if (!formData.name || !formData.phone || !formData.message) {
       alert('Zəhmət olmasa bütün məcburi sahələri doldurun.')
       return
     }
-    // Simulate form submission
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setFormData({ name: '', phone: '', email: '', message: '' })
-    }, 3000)
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          source: 'contact-page',
+        }),
+      })
+
+      if (response.ok) {
+        setSubmitted(true)
+        setTimeout(() => {
+          setSubmitted(false)
+          setFormData({ name: '', phone: '', email: '', message: '' })
+        }, 3000)
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      alert('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.')
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -254,6 +275,32 @@ export default function ContactPage() {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Google Maps Section */}
+      <section className="py-16 bg-white border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <div className="w-12 h-px bg-gray-900 mb-4"></div>
+            <h2 className="text-3xl font-medium text-gray-900 mb-4 tracking-tight">Bizim yerləşdiyimiz yer</h2>
+            <p className="text-lg text-gray-600 font-light">
+              Çinar Plaza, Bakı
+            </p>
+          </div>
+          
+          <div className="w-full h-[500px] border border-gray-200 overflow-hidden">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6162.54190993593!2d49.897302589428556!3d40.41413729599512!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40306295fc91b117%3A0x2ff9b248763925b7!2s%C3%87inar%20Plaza!5e1!3m2!1sen!2saz!4v1766333695902!5m2!1sen!2saz"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="w-full h-full"
+            />
           </div>
         </div>
       </section>
