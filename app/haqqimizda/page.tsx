@@ -1,8 +1,25 @@
 import Image from 'next/image'
 
 export const metadata = {
-  title: 'Haqqımızda — RC PROF',
-  description: 'RC PROF haqqında məlumat. Tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət.',
+  title: 'Haqqımızda',
+  description: 'RC PROF — tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə peşəkar xidmətlər. Peşəkar komanda, keyfiyyətli materiallar və müştəri məmnuniyyəti.',
+  keywords: [
+    'RC PROF haqqında',
+    'tikinti şirkəti Bakı',
+    'peşəkar tikinti',
+    'tikinti komanda',
+    'keyfiyyətli tikinti',
+    'Bakı tikinti',
+  ],
+  openGraph: {
+    title: 'Haqqımızda — RC PROF',
+    description: 'RC PROF haqqında məlumat. Tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət.',
+    type: 'website',
+    images: ['/images/about-main.jpg'],
+  },
+  alternates: {
+    canonical: '/haqqimizda',
+  },
 }
 
 export default function AboutPage() {

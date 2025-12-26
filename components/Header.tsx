@@ -32,7 +32,7 @@ export default function Header() {
           <Link href="/" className="flex items-center group transition-opacity hover:opacity-80">
             <div className="h-24 w-auto flex items-center">
               <Image
-                src="/images/logo2.png"
+                src="/images/logo.jpeg"
                 alt="RC PROF Logo"
                 width={240}
                 height={120}
@@ -87,7 +87,14 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                ) : null}
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={`nav-link ${pathname === item.href ? 'nav-link-active' : ''}`}
+                  >
+                    {item.title}
+                  </Link>
+                )}
               </div>
             ))}
           </nav>

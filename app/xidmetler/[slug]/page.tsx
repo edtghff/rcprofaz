@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { servicesData } from '@/data/servicesData'
+import Breadcrumbs from '@/components/Breadcrumbs'
 
 export async function generateStaticParams() {
   return servicesData.map((service) => ({
@@ -11,6 +12,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const service = servicesData.find((s) => s.slug === params.slug)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rcprof.az'
   
   if (!service) {
     return {
@@ -21,28 +23,75 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   return {
     title: `${service.title} — RC PROF`,
     description: service.description,
+    keywords: [
+      service.title,
+      'RC PROF',
+      'Bakı',
+      ...service.items.slice(0, 5),
+    ],
+    openGraph: {
+      title: `${service.title} — RC PROF`,
+      description: service.description,
+      type: 'website',
+      url: `${siteUrl}/xidmetler/${service.slug}`,
+      images: [`${siteUrl}/images/services/${service.slug}.jpg`],
+    },
+    alternates: {
+      canonical: `/xidmetler/${service.slug}`,
+    },
   }
 }
 
 export default function ServiceDetailPage({ params }: { params: { slug: string } }) {
   const service = servicesData.find((s) => s.slug === params.slug)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rcprof.az'
 
   if (!service) {
     notFound()
   }
 
+  const serviceSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.title,
+    description: service.description,
+    provider: {
+      '@type': 'Organization',
+      name: 'RC PROF',
+      url: siteUrl,
+    },
+    areaServed: {
+      '@type': 'City',
+      name: 'Bakı',
+    },
+    serviceType: service.title,
+    ...(service.items && {
+      offers: {
+        '@type': 'Offer',
+        itemOffered: service.items.map((item) => ({
+          '@type': 'Service',
+          name: item,
+        })),
+      },
+    }),
+  }
+
   return (
     <div className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
       {/* Hero Section */}
       <section className="bg-white py-16 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="text-sm mb-6 text-gray-500 font-light">
-            <Link href="/" className="hover:text-gray-900">Ana səhifə</Link>
-            <span className="mx-2">/</span>
-            <Link href="/xidmetler" className="hover:text-gray-900">Xidmətlər</Link>
-            <span className="mx-2">/</span>
-            <span className="text-gray-900 font-medium">{service.title}</span>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: 'Ana səhifə', href: '/' },
+              { label: 'Xidmətlər', href: '/xidmetler' },
+              { label: service.title },
+            ]}
+          />
           <div className="mb-6">
             <div className="w-12 h-px bg-gray-900 mb-4"></div>
           </div>
@@ -58,9 +107,10 @@ export default function ServiceDetailPage({ params }: { params: { slug: string }
           <div className="relative h-[400px] bg-gray-200 overflow-hidden mb-12 border border-gray-200">
             <Image
               src={`/images/services/${service.slug}.jpg`}
-              alt={service.title}
+              alt={`${service.title} - RC PROF xidməti`}
               fill
               className="object-cover"
+              priority
             />
           </div>
 

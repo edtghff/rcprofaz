@@ -11,6 +11,10 @@ export interface DropdownItem {
 
 export const navData: NavItem[] = [
   {
+    title: 'Ana səhifə',
+    href: '/',
+  },
+  {
     title: 'Haqqımızda',
     href: '/haqqimizda',
     dropdown: [
@@ -93,6 +97,14 @@ export const navData: NavItem[] = [
         href: '/xidmetler/suse-satisi',
       },
     ],
+  },
+  {
+    title: 'Videolar',
+    href: '/videolar',
+  },
+  {
+    title: 'Bloglar',
+    href: '/bloglar',
   },
 ];
 

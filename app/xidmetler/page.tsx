@@ -2,8 +2,26 @@ import Link from 'next/link'
 import { servicesData } from '@/data/servicesData'
 
 export const metadata = {
-  title: 'Xidmətlər — RC PROF',
-  description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri.',
+  title: 'Xidmətlər',
+  description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri. Bakıda peşəkar tikinti və texniki həllər.',
+  keywords: [
+    'RC PROF xidmətləri',
+    'tikinti xidmətləri Bakı',
+    'təmir xidmətləri',
+    'dizayn xidmətləri',
+    'lift satışı',
+    'lift servisi',
+    'qapı sistemləri',
+    'şüşə sistemləri',
+  ],
+  openGraph: {
+    title: 'Xidmətlər — RC PROF',
+    description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri.',
+    type: 'website',
+  },
+  alternates: {
+    canonical: '/xidmetler',
+  },
 }
 
 export default function ServicesPage() {
