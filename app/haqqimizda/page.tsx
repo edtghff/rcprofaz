@@ -2,23 +2,48 @@ import Image from 'next/image'
 
 export const metadata = {
   title: 'Haqqımızda',
-  description: 'RC PROF — tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə peşəkar xidmətlər. Peşəkar komanda, keyfiyyətli materiallar və müştəri məmnuniyyəti.',
+  description: 'RC PROF — tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə peşəkar xidmətlər. Peşəkar komanda, keyfiyyətli materiallar və müştəri məmnuniyyəti. Güvənlə yüksələk, inamla addımlayaq!',
   keywords: [
     'RC PROF haqqında',
     'tikinti şirkəti Bakı',
-    'peşəkar tikinti',
-    'tikinti komanda',
-    'keyfiyyətli tikinti',
-    'Bakı tikinti',
+    'peşəkar tikinti Bakı',
+    'tikinti komanda Bakı',
+    'keyfiyyətli tikinti Bakı',
+    'Bakı tikinti şirkəti',
+    'tikinti və texniki həllər',
+    'çoxprofilli tikinti şirkəti',
+    'peşəkar tikinti komanda',
+    'keyfiyyətli materiallar',
+    'müştəri məmnuniyyəti',
+    'tikinti xidmətləri Azərbaycan',
   ],
   openGraph: {
+    title: 'Haqqımızda — RC PROF | Bakı',
+    description: 'RC PROF haqqında məlumat. Tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət. Bakıda peşəkar xidmətlər.',
+    type: 'website',
+    locale: 'az_AZ',
+    siteName: 'RC PROF',
+    images: [
+      {
+        url: '/images/about-main.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'RC PROF Haqqında',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
     title: 'Haqqımızda — RC PROF',
     description: 'RC PROF haqqında məlumat. Tikinti və texniki həllər sahəsində fəaliyyət göstərən çoxprofilli şirkət.',
-    type: 'website',
     images: ['/images/about-main.jpg'],
   },
   alternates: {
     canonical: '/haqqimizda',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 

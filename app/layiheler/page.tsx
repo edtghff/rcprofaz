@@ -3,8 +3,47 @@ import Image from 'next/image'
 import { projectsData } from '@/data/projectsData'
 
 export const metadata = {
-  title: 'Layihələr — RC PROF',
-  description: 'RC PROF tərəfindən həyata keçirilmiş uğurlu layihələr.',
+  title: 'Layihələrimiz',
+  description: 'RC PROF tərəfindən həyata keçirilmiş uğurlu layihələr. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə tamamlanmış layihələr. Portfolio və referanslar.',
+  keywords: [
+    'RC PROF layihələri',
+    'tikinti layihələri Bakı',
+    'təmir layihələri Bakı',
+    'dizayn layihələri Bakı',
+    'lift layihələri Bakı',
+    'tikinti portfolio',
+    'uğurlu layihələr Bakı',
+    'tikinti referansları',
+    'tamamlanmış layihələr',
+    'peşəkar layihələr',
+  ],
+  openGraph: {
+    title: 'Layihələrimiz — RC PROF | Bakı',
+    description: 'RC PROF tərəfindən həyata keçirilmiş uğurlu layihələr. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə tamamlanmış layihələr.',
+    type: 'website',
+    locale: 'az_AZ',
+    siteName: 'RC PROF',
+    images: [
+      {
+        url: '/images/projects/project-1.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'RC PROF Layihələri',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Layihələrimiz — RC PROF',
+    description: 'RC PROF tərəfindən həyata keçirilmiş uğurlu layihələr.',
+  },
+  alternates: {
+    canonical: '/layiheler',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function ProjectsPage() {

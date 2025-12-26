@@ -3,64 +3,73 @@ import Image from 'next/image'
 import { servicesData } from '@/data/servicesData'
 import { productsData } from '@/data/productsData'
 import { projectsData } from '@/data/projectsData'
-import { Video } from '@/data/videosData'
 import ContactFormSection from '@/components/ContactFormSection'
 import HeroSection from '@/components/HeroSection'
 import FixedContactButtons from '@/components/FixedContactButtons'
 
-async function getVideos(): Promise<Video[]> {
-  try {
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-    const host = process.env.VERCEL_URL || 'localhost:3000'
-    const baseUrl = `${protocol}://${host}`
-    const res = await fetch(`${baseUrl}/api/videos`, { cache: 'no-store' })
-    if (res.ok) {
-      const data = await res.json()
-      return data.videos || []
-    }
-  } catch (error) {
-    try {
-      const res = await fetch('http://localhost:3000/api/videos', { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        return data.videos || []
-      }
-    } catch {
-      // If both fail, return empty array
-    }
-  }
-  return []
-}
-
 export const metadata = {
   title: 'Ana Səhifə',
-  description: 'RC PROF Bakıda tikinti, təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri üzrə korporativ xidmətlər təqdim edir. Peşəkar komanda, keyfiyyətli materiallar və vaxtında icra ilə.',
+  description: 'RC PROF Bakıda tikinti, təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri üzrə korporativ xidmətlər təqdim edir. Peşəkar komanda, keyfiyyətli materiallar və vaxtında icra ilə. Yaşayış və kommersiya obyektləri üçün tam paket xidmətlər.',
   keywords: [
     'RC PROF',
     'tikinti Bakı',
     'təmir işləri Bakı',
-    'dizayn xidmətləri',
+    'dizayn xidmətləri Bakı',
     'lift satışı Bakı',
-    'lift servisi',
-    'qapı sistemləri',
-    'şüşə sistemləri',
-    'cam balkon',
+    'lift servisi Bakı',
+    'qapı sistemləri Bakı',
+    'şüşə sistemləri Bakı',
+    'cam balkon Bakı',
     'tikinti şirkəti Bakı',
+    'tikinti və təmir Bakı',
+    'peşəkar tikinti Bakı',
+    'keyfiyyətli tikinti',
+    'tikinti xidmətləri Azərbaycan',
+    'lift montajı Bakı',
+    'qapı montajı Bakı',
+    'şüşə montajı Bakı',
+    'tikinti kompaniyası Bakı',
+    'təmir kompaniyası Bakı',
+    'dizayn studiyası Bakı',
   ],
   openGraph: {
+    title: 'RC PROF — Tikinti, Təmir, Dizayn, Lift, Qapı və Şüşə Sistemləri | Bakı',
+    description: 'RC PROF Bakıda tikinti, təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri üzrə korporativ xidmətlər təqdim edir. Peşəkar komanda, keyfiyyətli materiallar və vaxtında icra ilə.',
+    type: 'website',
+    locale: 'az_AZ',
+    siteName: 'RC PROF',
+    images: [
+      {
+        url: '/images/about-preview.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'RC PROF — Tikinti və Texniki Xidmətlər',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
     title: 'RC PROF — Tikinti, Təmir, Dizayn, Lift, Qapı və Şüşə Sistemləri',
     description: 'RC PROF Bakıda tikinti, təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri üzrə korporativ xidmətlər təqdim edir.',
-    type: 'website',
     images: ['/images/about-preview.jpg'],
   },
   alternates: {
     canonical: '/',
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 }
 
 export default async function Home() {
-  const videosData = await getVideos()
-  
   return (
     <>
       {/* Hero Banner with Video Background */}
@@ -111,106 +120,6 @@ export default async function Home() {
                     unoptimized={process.env.NODE_ENV === 'development'}
                   />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Video Section */}
-      <section className="py-20 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-12">
-            <div className="w-12 h-px bg-gray-900 mb-4"></div>
-            <h2 className="text-4xl md:text-5xl font-medium text-gray-900 mb-4 tracking-tight">
-              Videolar
-            </h2>
-            <p className="text-lg text-gray-600 font-light">
-              Layihələrimiz və xidmətlərimiz haqqında videolar
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videosData.length > 0 ? (
-              videosData.slice(0, 3).map((video) => (
-                <Link
-                  key={video.slug}
-                  href={`/videolar/${video.slug}`}
-                  className="relative aspect-video bg-gray-200 rounded-sm overflow-hidden border border-gray-300 group cursor-pointer"
-                >
-                  {video.thumbnail ? (
-                    <Image
-                      src={video.thumbnail}
-                      alt={video.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gray-300"></div>
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <svg className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-4">
-                    <p className="text-white font-semibold text-sm">{video.title}</p>
-                    {video.category && (
-                      <p className="text-white/80 text-xs mt-1">{video.category}</p>
-                    )}
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <>
-                {/* Video Placeholder 1 */}
-                <div className="relative aspect-video bg-gray-200 rounded-sm overflow-hidden border border-gray-300 group cursor-pointer">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <svg className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white font-medium">Layihələrimiz</p>
-                  </div>
-                </div>
-                {/* Video Placeholder 2 */}
-                <div className="relative aspect-video bg-gray-200 rounded-sm overflow-hidden border border-gray-300 group cursor-pointer">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <svg className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white font-medium">Xidmətlərimiz</p>
-                  </div>
-                </div>
-                {/* Video Placeholder 3 */}
-                <div className="relative aspect-video bg-gray-200 rounded-sm overflow-hidden border border-gray-300 group cursor-pointer">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <svg className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white font-medium">Şirkət haqqında</p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="mt-8 text-center">
-            <Link href="/videolar" className="inline-flex items-center text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors group">
-              Bütün videolara bax
-              <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
           </div>
         </div>
       </section>

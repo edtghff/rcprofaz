@@ -3,24 +3,50 @@ import { servicesData } from '@/data/servicesData'
 
 export const metadata = {
   title: 'Xidmətlər',
-  description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri. Bakıda peşəkar tikinti və texniki həllər.',
+  description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri. Bakıda peşəkar tikinti və texniki həllər. Yaşayış və kommersiya obyektləri üçün tam paket xidmətlər.',
   keywords: [
     'RC PROF xidmətləri',
     'tikinti xidmətləri Bakı',
-    'təmir xidmətləri',
-    'dizayn xidmətləri',
-    'lift satışı',
-    'lift servisi',
-    'qapı sistemləri',
-    'şüşə sistemləri',
+    'təmir xidmətləri Bakı',
+    'dizayn xidmətləri Bakı',
+    'lift satışı Bakı',
+    'lift servisi Bakı',
+    'qapı sistemləri Bakı',
+    'şüşə sistemləri Bakı',
+    'cam balkon Bakı',
+    'tikinti və təmir xidmətləri',
+    'peşəkar tikinti xidmətləri',
+    'lift montajı Bakı',
+    'qapı montajı Bakı',
+    'şüşə montajı Bakı',
+    'tikinti şirkəti xidmətləri',
   ],
   openGraph: {
+    title: 'Xidmətlər — RC PROF | Bakı',
+    description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri. Bakıda peşəkar tikinti və texniki həllər.',
+    type: 'website',
+    locale: 'az_AZ',
+    siteName: 'RC PROF',
+    images: [
+      {
+        url: '/images/services/tikinti-temir-isleri.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'RC PROF Xidmətləri',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
     title: 'Xidmətlər — RC PROF',
     description: 'RC PROF xidmətləri: Tikinti və təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri.',
-    type: 'website',
   },
   alternates: {
     canonical: '/xidmetler',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 }
 

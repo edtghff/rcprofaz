@@ -45,7 +45,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 1,
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/haqqimizda`,
@@ -57,7 +57,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/elaqe`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/videolar`,
@@ -88,7 +88,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/xidmetler/${service.slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: 0.7,
+    priority: 0.8,
   }))
 
   // Product pages
@@ -96,7 +96,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/mehsullarimiz/${product.slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: 0.7,
+    priority: 0.8,
   }))
 
   // Project pages
@@ -104,7 +104,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/layiheler/${project.slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: 0.7,
+    priority: 0.8,
   }))
 
   // Category pages
@@ -113,19 +113,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/xidmetler`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
-      priority: 0.8,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/mehsullarimiz`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
-      priority: 0.8,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/layiheler`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
-      priority: 0.8,
+      priority: 0.9,
     },
   ]
 

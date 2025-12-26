@@ -3,8 +3,48 @@ import Image from 'next/image'
 import { productCategories, productsData } from '@/data/productsData'
 
 export const metadata = {
-  title: 'Məhsullarımız — RC PROF',
-  description: 'RC PROF məhsulları: Liftlər, Eskalatorlar, İnşaat Avadanlıqları, Avtomatik Giriş Sistemləri.',
+  title: 'Məhsullarımız',
+  description: 'RC PROF məhsulları: Liftlər, Eskalatorlar, İnşaat Avadanlıqları, Avtomatik Giriş Sistemləri. Bakıda keyfiyyətli məhsullar və texniki həllər. Peşəkar montaj və servis xidmətləri.',
+  keywords: [
+    'RC PROF məhsulları',
+    'liftlər Bakı',
+    'eskalatorlar Bakı',
+    'inşaat avadanlıqları Bakı',
+    'avtomatik giriş sistemləri Bakı',
+    'lift satışı Bakı',
+    'lift montajı Bakı',
+    'lift servisi Bakı',
+    'qapı sistemləri Bakı',
+    'keyfiyyətli liftlər',
+    'peşəkar lift montajı',
+  ],
+  openGraph: {
+    title: 'Məhsullarımız — RC PROF | Bakı',
+    description: 'RC PROF məhsulları: Liftlər, Eskalatorlar, İnşaat Avadanlıqları, Avtomatik Giriş Sistemləri. Bakıda keyfiyyətli məhsullar və texniki həllər.',
+    type: 'website',
+    locale: 'az_AZ',
+    siteName: 'RC PROF',
+    images: [
+      {
+        url: '/images/products/liftler.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'RC PROF Məhsulları',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Məhsullarımız — RC PROF',
+    description: 'RC PROF məhsulları: Liftlər, Eskalatorlar, İnşaat Avadanlıqları, Avtomatik Giriş Sistemləri.',
+  },
+  alternates: {
+    canonical: '/mehsullarimiz',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function ProductsPage() {
