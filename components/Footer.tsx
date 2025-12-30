@@ -11,13 +11,13 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="mb-8">
               <Link href="/" className="inline-block transition-opacity hover:opacity-80">
-                <div className="h-20 w-auto flex items-center">
+                <div className="h-28 w-auto flex items-center">
                   <Image
-                    src="/images/logo.jpeg"
+                    src="/rcprof.png"
                     alt="RC PROF Logo"
-                    width={200}
-                    height={100}
-                    className="h-20 w-auto object-contain"
+                    width={280}
+                    height={140}
+                    className="h-28 w-auto object-contain"
                   />
                 </div>
               </Link>
