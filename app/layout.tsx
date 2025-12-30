@@ -3,6 +3,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import StructuredData from '@/components/StructuredData'
+import FixedContactButtons from '@/components/FixedContactButtons'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rcprof.az'
 const siteName = 'RC PROF'
@@ -117,6 +118,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <FixedContactButtons />
       </body>
     </html>
   )

@@ -129,10 +129,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
+  // Helper function to safely parse dates
+  const safeDate = (dateValue: any): Date => {
+    if (!dateValue) return new Date()
+    const parsed = new Date(dateValue)
+    // Check if date is valid
+    if (isNaN(parsed.getTime())) {
+      return new Date()
+    }
+    return parsed
+  }
+
   // Video pages
   const videoPages: MetadataRoute.Sitemap = videos.map((video: any) => ({
     url: `${baseUrl}/videolar/${video.slug}`,
-    lastModified: new Date(video.date || Date.now()),
+    lastModified: safeDate(video.date),
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }))
@@ -140,7 +151,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Blog pages
   const blogPages: MetadataRoute.Sitemap = blogs.map((blog: any) => ({
     url: `${baseUrl}/bloglar/${blog.slug}`,
-    lastModified: new Date(blog.date || Date.now()),
+    lastModified: safeDate(blog.date),
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }))

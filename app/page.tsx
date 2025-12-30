@@ -5,7 +5,6 @@ import { productsData } from '@/data/productsData'
 import { projectsData } from '@/data/projectsData'
 import ContactFormSection from '@/components/ContactFormSection'
 import HeroSection from '@/components/HeroSection'
-import FixedContactButtons from '@/components/FixedContactButtons'
 
 export const metadata = {
   title: 'Ana Səhifə',
@@ -74,9 +73,6 @@ export default async function Home() {
     <>
       {/* Hero Banner with Video Background */}
       <HeroSection />
-      
-      {/* Fixed Contact Buttons */}
-      <FixedContactButtons />
 
       {/* About Preview */}
       <section className="py-20 bg-white border-t border-gray-200">
