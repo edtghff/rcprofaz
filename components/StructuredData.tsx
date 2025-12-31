@@ -8,7 +8,7 @@ export default function StructuredData() {
     '@type': 'Organization',
     name: 'RC PROF',
     url: siteUrl,
-    logo: `${siteUrl}/rcprof.png`,
+    logo: `${siteUrl}/rcprof-logo.png`,
     description: 'RC PROF Bakıda tikinti, təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri üzrə korporativ xidmətlər təqdim edir.',
     address: {
       '@type': 'PostalAddress',

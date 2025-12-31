@@ -99,7 +99,7 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
       url: siteUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${siteUrl}/rcprof.png`,
+        url: `${siteUrl}/rcprof-logo.png`,
       },
     },
     mainEntityOfPage: {

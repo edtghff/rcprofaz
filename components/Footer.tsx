@@ -13,7 +13,7 @@ export default function Footer() {
               <Link href="/" className="inline-block transition-opacity hover:opacity-80">
                 <div className="h-28 w-auto flex items-center">
                   <Image
-                    src="/rcprof.png"
+                    src="/rcprof-logo.png"
                     alt="RC PROF Logo"
                     width={280}
                     height={140}

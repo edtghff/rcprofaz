@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     description: defaultDescription,
     images: [
       {
-        url: '/rcprof.png',
+        url: '/rcprof-logo.png',
         width: 1200,
         height: 630,
         alt: 'RC PROF Logo',
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: defaultTitle,
     description: defaultDescription,
-    images: ['/rcprof.png'],
+    images: ['/rcprof-logo.png'],
   },
   robots: {
     index: true,
