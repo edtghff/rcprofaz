@@ -92,9 +92,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Add your verification codes here when available
-    // google: 'your-google-verification-code',
-    // yandex: 'your-yandex-verification-code',
+    google: 'cxj3JtMXwGokCbDrA4zFv5X3Zr85uTGRWJQdlOjnn-k',
   },
   alternates: {
     canonical: siteUrl,
