@@ -27,16 +27,16 @@ export default function Header() {
   return (
     <header className="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
       <div className="max-w-[1920px] mx-auto px-6 lg:px-12">
-        <div className="flex justify-between items-center h-28">
+        <div className="flex justify-between items-center h-28 lg:h-36">
           {/* Logo */}
           <Link href="/" className="flex items-center group transition-opacity hover:opacity-80">
-            <div className="h-28 w-auto flex items-center">
+            <div className="h-20 w-auto flex items-center lg:h-36">
               <Image
                 src="/rcprof-logo.png"
                 alt="RC PROF Logo"
-                width={560}
-                height={280}
-                className="h-28 w-auto object-contain"
+                width={720}
+                height={360}
+                className="h-20 w-auto object-contain lg:h-36"
                 priority
               />
             </div>
