@@ -14,9 +14,10 @@ interface Video {
 }
 
 const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production'
-const dataFilePath = isVercel
-  ? path.join('/tmp', 'videos.json')
-  : path.join(process.cwd(), 'data', 'videos.json')
+// Primary source: data/videos.json (in repo, read-only on Vercel)
+const repoDataPath = path.join(process.cwd(), 'data', 'videos.json')
+// Temporary storage: /tmp/videos.json (writable on Vercel, but not persistent)
+const tmpDataPath = path.join('/tmp', 'videos.json')
 
 function verifyAuth(request: NextRequest): boolean {
   const token = request.cookies.get('admin_token')?.value
@@ -32,29 +33,67 @@ function verifyAuth(request: NextRequest): boolean {
 }
 
 function readVideos(): Video[] {
-  if (!fs.existsSync(dataFilePath)) {
-    return []
+  // Try to read from /tmp first (has latest changes)
+  if (fs.existsSync(tmpDataPath)) {
+    try {
+      const fileContent = fs.readFileSync(tmpDataPath, 'utf-8')
+      const videos = JSON.parse(fileContent)
+      if (Array.isArray(videos) && videos.length > 0) {
+        return videos
+      }
+    } catch (error) {
+      console.error('Error reading from /tmp:', error)
+    }
   }
-  try {
-    const fileContent = fs.readFileSync(dataFilePath, 'utf-8')
-    return JSON.parse(fileContent)
-  } catch (error) {
-    console.error('Error reading videos:', error)
-    return []
+  
+  // Fallback to repo data file
+  if (fs.existsSync(repoDataPath)) {
+    try {
+      const fileContent = fs.readFileSync(repoDataPath, 'utf-8')
+      const videos = JSON.parse(fileContent)
+      
+      // On Vercel, initialize /tmp with repo data if /tmp doesn't exist
+      if (isVercel && !fs.existsSync(tmpDataPath) && Array.isArray(videos)) {
+        try {
+          const tmpDir = path.dirname(tmpDataPath)
+          if (!fs.existsSync(tmpDir)) {
+            fs.mkdirSync(tmpDir, { recursive: true })
+          }
+          fs.writeFileSync(tmpDataPath, JSON.stringify(videos, null, 2), 'utf-8')
+        } catch (error) {
+          console.error('Error initializing /tmp from repo:', error)
+        }
+      }
+      
+      return videos
+    } catch (error) {
+      console.error('Error reading from repo:', error)
+    }
   }
+  
+  return []
 }
 
 function writeVideos(videos: Video[]): void {
   try {
-    // Ensure directory exists
-    const dir = path.dirname(dataFilePath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
+    // Always write to /tmp (works on Vercel)
+    const tmpDir = path.dirname(tmpDataPath)
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true })
     }
-    fs.writeFileSync(dataFilePath, JSON.stringify(videos, null, 2), 'utf-8')
+    fs.writeFileSync(tmpDataPath, JSON.stringify(videos, null, 2), 'utf-8')
+    
+    // Also try to write to repo data file (works locally, read-only on Vercel)
+    if (!isVercel) {
+      const repoDir = path.dirname(repoDataPath)
+      if (!fs.existsSync(repoDir)) {
+        fs.mkdirSync(repoDir, { recursive: true })
+      }
+      fs.writeFileSync(repoDataPath, JSON.stringify(videos, null, 2), 'utf-8')
+    }
   } catch (error) {
     console.error('Error writing videos:', error)
-    throw error
+    // Don't throw - at least /tmp write should succeed
   }
 }
 

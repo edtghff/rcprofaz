@@ -110,5 +110,6 @@ export const navData: NavItem[] = [
 
 export const contactPhone = '+994 55 998 19 85';
 export const contactPhoneRaw = '994559981985';
-export const contactAddress = 'Bakı, Çinar Plaza';
+export const contactAddress = 'Çinar Park Biznes Mərkəzi';
+export const contactEmail = 'info@rcprof.az';
 

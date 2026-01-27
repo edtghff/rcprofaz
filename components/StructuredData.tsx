@@ -12,20 +12,21 @@ export default function StructuredData() {
     description: 'RC PROF Bakıda tikinti, təmir, dizayn, lift satışı və servisi, qapı və şüşə sistemləri üzrə korporativ xidmətlər təqdim edir.',
     address: {
       '@type': 'PostalAddress',
+      streetAddress: 'Çinar Park Biznes Mərkəzi',
       addressLocality: 'Bakı',
       addressCountry: 'AZ',
     },
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+994-55-998-19-85',
+      email: 'info@rcprof.az',
       contactType: 'customer service',
       areaServed: 'AZ',
       availableLanguage: 'az',
     },
     sameAs: [
-      // Add social media links when available
-      // 'https://www.facebook.com/rcprof',
-      // 'https://www.instagram.com/rcprof',
+      'https://www.facebook.com/share/17uh86RmzR/?mibextid=wwXIfr',
+      'https://www.instagram.com/rcprof.az',
     ],
   }
 

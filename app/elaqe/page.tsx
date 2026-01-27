@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { contactPhone, contactPhoneRaw, contactAddress } from '@/data/navData'
+import { contactPhone, contactPhoneRaw, contactAddress, contactEmail } from '@/data/navData'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -108,6 +108,36 @@ export default function ContactPage() {
                       className="text-gray-800 hover:text-black font-medium transition-colors"
                     >
                       {contactPhone}
+                    </a>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-gray-900 flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-medium text-gray-900 mb-1">E-mail</h3>
+                    <a
+                      href={`mailto:${contactEmail}`}
+                      className="text-gray-800 hover:text-black font-medium transition-colors break-all"
+                    >
+                      {contactEmail}
                     </a>
                   </div>
                 </div>
@@ -286,7 +316,7 @@ export default function ContactPage() {
             <div className="w-12 h-px bg-gray-900 mb-4"></div>
             <h2 className="text-3xl font-medium text-gray-900 mb-4 tracking-tight">Bizim yerləşdiyimiz yer</h2>
             <p className="text-lg text-gray-600 font-light">
-              Çinar Plaza, Bakı
+              {contactAddress}
             </p>
           </div>
           
