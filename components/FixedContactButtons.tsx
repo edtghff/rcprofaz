@@ -1,6 +1,6 @@
-import { contactPhoneRaw } from '@/data/navData'
-
 'use client'
+
+import { contactPhoneRaw } from '@/data/navData'
 
 export default function FixedContactButtons() {
   return (
