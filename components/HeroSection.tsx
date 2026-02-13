@@ -29,7 +29,7 @@ export default function HeroSection() {
           </video>
         ) : null}
         <Image
-          src="/images/hero-banner.jpg"
+          src="/images/mainpage.jpeg"
           alt="RC PROF Hero"
           fill
           className={`object-cover ${showVideo ? 'hidden' : 'opacity-40'}`}
