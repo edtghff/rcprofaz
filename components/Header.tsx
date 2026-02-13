@@ -30,13 +30,13 @@ export default function Header() {
         <div className="flex justify-between items-center h-28 2xl:h-36">
           {/* Logo */}
           <Link href="/" className="flex items-center group transition-opacity hover:opacity-80">
-            <div className="h-20 w-auto flex items-center 2xl:h-36">
+            <div className="h-20 w-auto flex items-center 2xl:h-36 -ml-2">
               <Image
                 src="/rcprof-logo.png"
                 alt="RC PROF Logo"
                 width={720}
                 height={360}
-                className="h-20 w-auto object-contain 2xl:h-36"
+className="h-20 w-auto object-contain 2xl:h-36 scale-[1.02]"
                 priority
               />
             </div>
@@ -79,7 +79,7 @@ export default function Header() {
                           <Link
                             key={dropdownItem.href}
                             href={dropdownItem.href}
-                            className="block px-5 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors font-medium text-sm"
+                        className="block px-5 py-2.5 text-[#0e0d35] hover:bg-gray-50 hover:text-[#0e0d35] transition-colors font-medium text-sm"
                           >
                             {dropdownItem.title}
                           </Link>
@@ -103,7 +103,7 @@ export default function Header() {
           <div className="hidden lg:flex items-center space-x-8">
             <a
               href={`tel:${contactPhoneRaw}`}
-              className="text-gray-700 hover:text-gray-900 font-medium text-base transition-colors whitespace-nowrap"
+              className="text-[#0e0d35] hover:text-[#0e0d35] font-medium text-base transition-colors whitespace-nowrap"
             >
               {contactPhone}
             </a>
@@ -114,7 +114,7 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 text-gray-700"
+            className="lg:hidden p-2 text-[#0e0d35]"
             onClick={toggleMobileMenu}
             aria-label="Menu"
           >
@@ -152,7 +152,7 @@ export default function Header() {
                   {item.dropdown ? (
                     <div>
                       <button
-                        className="w-full text-left px-4 py-3 text-gray-700 font-medium text-sm flex items-center justify-between hover:bg-gray-50"
+                        className="w-full text-left px-4 py-3 text-[#0e0d35] font-medium text-sm flex items-center justify-between hover:bg-gray-50"
                         onClick={() => toggleDropdown(item.title)}
                       >
                         <span>{item.title}</span>
@@ -189,8 +189,8 @@ export default function Header() {
                   ) : (
                     <Link
                       href={item.href}
-                      className={`block px-4 py-3 text-gray-700 font-medium text-sm transition-colors ${
-                        pathname === item.href ? 'text-gray-900 bg-gray-50 border-l-2 border-gray-900' : 'hover:bg-gray-50'
+                      className={`block px-4 py-3 text-[#0e0d35] font-medium text-sm transition-colors ${
+                        pathname === item.href ? 'text-[#0e0d35] bg-gray-50 border-l-2 border-[#0e0d35]' : 'hover:bg-gray-50'
                       }`}
                     >
                       {item.title}
@@ -201,7 +201,7 @@ export default function Header() {
               <div className="pt-4 border-t border-gray-200 mt-4">
                 <a
                   href={`tel:${contactPhoneRaw}`}
-                  className="block px-4 py-3 text-gray-700 font-medium text-sm mb-2"
+                  className="block px-4 py-3 text-[#0e0d35] font-medium text-sm mb-2"
                 >
                   {contactPhone}
                 </a>

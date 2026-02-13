@@ -44,11 +44,11 @@
   }
   
   .nav-link {
-    @apply text-gray-700 hover:text-gray-900 font-medium text-base tracking-wide py-5 px-6 transition-colors duration-200 relative flex items-center justify-center;
+    @apply text-[#0e0d35] hover:text-[#0e0d35] font-medium text-base tracking-wide py-5 px-6 transition-colors duration-200 relative flex items-center justify-center;
   }
   
   .nav-link-active {
-    @apply text-gray-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gray-900;
+    @apply text-[#0e0d35] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#0e0d35];
   }
 }
 
