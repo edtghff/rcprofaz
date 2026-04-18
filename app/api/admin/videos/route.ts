@@ -38,7 +38,7 @@ function readVideos(): Video[] {
     try {
       const fileContent = fs.readFileSync(tmpDataPath, 'utf-8')
       const videos = JSON.parse(fileContent)
-      if (Array.isArray(videos) && videos.length > 0) {
+      if (Array.isArray(videos)) {
         return videos
       }
     } catch (error) {
@@ -120,13 +120,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const raw = await request.json()
+    const slugIn = typeof raw.slug === 'string' ? raw.slug.trim() : ''
+    const titleIn = typeof raw.title === 'string' ? raw.title.trim() : ''
+    const descIn = typeof raw.description === 'string' ? raw.description.trim() : ''
+    const dateIn = typeof raw.date === 'string' ? raw.date.trim() : ''
+
     const video: Video = {
       ...raw,
+      slug: slugIn || `media-${Date.now()}`,
+      title: titleIn || 'Adsız',
+      description: descIn || '—',
+      date:
+        dateIn ||
+        new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
       videoUrl: typeof raw.videoUrl === 'string' ? raw.videoUrl.trim() : '',
-    }
-
-    if (!video.slug || !video.title || !video.description || !video.date) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const videos = readVideos()

@@ -59,13 +59,26 @@ export default function AdminPage() {
     date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
   })
 
-  const makeSlug = (value: string) =>
-    value
-      .toLowerCase()
+  /** URL slug: latın hərflərinə yaxınlaşdırır; boş qalarsa unikal slug verir */
+  const makeSlug = (value: string) => {
+    const base = value
       .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/ğ/gi, 'g')
+      .replace(/ü/gi, 'u')
+      .replace(/ş/gi, 's')
+      .replace(/ı/gi, 'i')
+      .replace(/İ/g, 'i')
+      .replace(/ö/gi, 'o')
+      .replace(/ç/gi, 'c')
+      .replace(/ə/gi, 'e')
+      .replace(/Ə/g, 'e')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]+/g, ' ')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+    return base || `media-${Date.now()}`
+  }
 
   useEffect(() => {
     checkAuth()
@@ -197,8 +210,9 @@ export default function AdminPage() {
         fetchVideos()
         router.refresh()
       } else {
-        const data = await response.json()
-        alert(data.error || 'Xəta baş verdi')
+        const data = await response.json().catch(() => ({}))
+        const msg = [data.error, data.detail].filter(Boolean).join('\n')
+        alert(msg || 'Xəta baş verdi')
       }
     } catch (error) {
       console.error('Error saving video:', error)
@@ -240,8 +254,9 @@ export default function AdminPage() {
         fetchBlogs()
         router.refresh()
       } else {
-        const data = await response.json()
-        alert(data.error || 'Xəta baş verdi')
+        const data = await response.json().catch(() => ({}))
+        const msg = [data.error, data.detail].filter(Boolean).join('\n')
+        alert(msg || 'Xəta baş verdi')
       }
     } catch (error) {
       console.error('Error saving blog:', error)
@@ -320,8 +335,9 @@ export default function AdminPage() {
 
         return data.path
       } else {
-        const error = await response.json()
-        alert(error.error || 'Fayl yüklənərkən xəta baş verdi')
+        const error = await response.json().catch(() => ({}))
+        const msg = [error.error, error.detail].filter(Boolean).join('\n')
+        alert(msg || 'Fayl yüklənərkən xəta baş verdi')
         return null
       }
     } catch (error) {
@@ -499,7 +515,7 @@ export default function AdminPage() {
                                 {uploadingVideoFile ? 'Yüklənir...' : 'Video faylı yüklə'}
                                 <input
                                   type="file"
-                                  accept="video/*"
+                                  accept="video/*,.mp4,.webm,.mov,.m4v"
                                   multiple={false}
                                   className="hidden"
                                   onChange={(e) => {
@@ -533,7 +549,7 @@ export default function AdminPage() {
                                 {uploadingVideoThumbnail ? 'Yüklənir...' : 'Şəkil yüklə'}
                                 <input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/*,.heic,.heif"
                                   multiple={false}
                                   className="hidden"
                                   onChange={(e) => {
@@ -711,7 +727,7 @@ export default function AdminPage() {
                                 {uploadingBlogImage ? 'Yüklənir...' : 'Şəkil yüklə'}
                                 <input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/*,.heic,.heif"
                                   multiple={false}
                                   className="hidden"
                                   onChange={(e) => {

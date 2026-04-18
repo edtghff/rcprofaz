@@ -72,15 +72,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
-    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg']
-    
-    const isImage = allowedImageTypes.includes(file.type)
-    const isVideo = allowedVideoTypes.includes(file.type)
+    const ext = path.extname(file.name || '').toLowerCase()
+    const imageExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif', '.avif', '.bmp']
+    const videoExts = ['.mp4', '.webm', '.ogg', '.mov', '.m4v', '.qt']
+
+    const allowedImageTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/heic',
+      'image/heif',
+      'image/avif',
+      'image/bmp',
+    ]
+    const allowedVideoTypes = [
+      'video/mp4',
+      'video/webm',
+      'video/ogg',
+      'video/quicktime',
+      'video/x-msvideo',
+    ]
+
+    let isImage = allowedImageTypes.includes(file.type)
+    let isVideo = allowedVideoTypes.includes(file.type)
+
+    if (!file.type || file.type === 'application/octet-stream') {
+      if (imageExts.includes(ext)) isImage = true
+      if (videoExts.includes(ext)) isVideo = true
+    }
 
     if (!isImage && !isVideo) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Invalid file type',
+          detail: `MIME: "${file.type || 'empty'}", uzantı: "${ext || 'yox'}"`,
+        },
+        { status: 400 }
+      )
     }
 
     const supabaseUrl = process.env.SUPABASE_URL
@@ -97,10 +127,10 @@ export async function POST(request: NextRequest) {
     await ensureSupabaseBucket(supabaseUrl, supabaseServiceRoleKey, bucket)
 
     // Protect serverless memory and request timeout for mobile uploads.
-    const maxImageSize = 10 * 1024 * 1024 // 10 MB
+    const maxImageSize = 15 * 1024 * 1024 // 15 MB (HEIC from phones)
     const maxVideoSize = 120 * 1024 * 1024 // 120 MB
     if (isImage && file.size > maxImageSize) {
-      return NextResponse.json({ error: 'Image is too large (max 10MB)' }, { status: 400 })
+      return NextResponse.json({ error: 'Image is too large (max 15MB)' }, { status: 400 })
     }
     if (isVideo && file.size > maxVideoSize) {
       return NextResponse.json({ error: 'Video is too large (max 120MB)' }, { status: 400 })
@@ -120,8 +150,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 })
     }
 
-    const ext = path.extname(file.name) || (isImage ? '.jpg' : '.mp4')
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`
+    const extResolved = ext || (isImage ? '.jpg' : '.mp4')
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${extResolved}`
     const objectPath = `${folder}/${fileName}`
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
@@ -142,7 +172,7 @@ export async function POST(request: NextRequest) {
       const errorBody = await uploadResponse.text()
       console.error('Supabase upload error:', errorBody)
       return NextResponse.json(
-        { error: 'Failed to upload to Supabase Storage' },
+        { error: 'Failed to upload to Supabase Storage', detail: errorBody.slice(0, 500) },
         { status: 500 }
       )
     }

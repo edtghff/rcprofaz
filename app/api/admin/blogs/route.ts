@@ -80,10 +80,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const blog: Blog = await request.json()
-    
-    if (!blog.slug || !blog.title || !blog.excerpt || !blog.image || !blog.date) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const raw = await request.json()
+    const slugIn = typeof raw.slug === 'string' ? raw.slug.trim() : ''
+    const titleIn = typeof raw.title === 'string' ? raw.title.trim() : ''
+    const excerptIn = typeof raw.excerpt === 'string' ? raw.excerpt.trim() : ''
+    const imageIn = typeof raw.image === 'string' ? raw.image.trim() : ''
+    const dateIn = typeof raw.date === 'string' ? raw.date.trim() : ''
+
+    const blog: Blog = {
+      ...raw,
+      slug: slugIn || `blog-${Date.now()}`,
+      title: titleIn || 'Adsız',
+      excerpt: excerptIn || '—',
+      image: imageIn || '/rcprof-logo.png',
+      date:
+        dateIn ||
+        new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
     }
 
     const blogs = readBlogs()
