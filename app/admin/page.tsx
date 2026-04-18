@@ -322,14 +322,78 @@ export default function AdminPage() {
   }
 
   const handleFileUpload = async (file: File, type: 'video-thumbnail' | 'video-file' | 'blog-image') => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('type', type)
-
     try {
       if (type === 'video-thumbnail') setUploadingVideoThumbnail(true)
       if (type === 'video-file') setUploadingVideoFile(true)
       if (type === 'blog-image') setUploadingBlogImage(true)
+
+      // 1) Kiçik JSON — Supabase imzalı URL (Vercel ~4.5MB limitindən keçmək üçün)
+      const signRes = await fetch('/api/admin/upload-sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          fileName: file.name || 'upload.bin',
+          contentType: file.type || 'application/octet-stream',
+          fileSize: file.size,
+          type,
+        }),
+      })
+
+      if (signRes.ok) {
+        const sign = await signRes.json()
+        const { signedUrl, publicUrl, cacheControl } = sign as {
+          signedUrl: string
+          publicUrl: string
+          cacheControl?: string
+        }
+
+        const fd = new FormData()
+        fd.append('cacheControl', cacheControl || '3600')
+        fd.append('', file)
+
+        let putRes = await fetch(signedUrl, {
+          method: 'PUT',
+          body: fd,
+          mode: 'cors',
+        })
+
+        if (!putRes.ok) {
+          putRes = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: {
+              'cache-control': `max-age=${cacheControl || '3600'}`,
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+            body: file,
+            mode: 'cors',
+          })
+        }
+
+        if (putRes.ok) {
+          if (type === 'video-thumbnail') {
+            setVideoForm((prev) => ({ ...prev, thumbnail: publicUrl }))
+          } else if (type === 'video-file') {
+            setVideoForm((prev) => ({ ...prev, videoUrl: publicUrl }))
+          } else if (type === 'blog-image') {
+            setBlogForm((prev) => ({ ...prev, image: publicUrl }))
+          }
+          return publicUrl
+        }
+
+        const putText = await putRes.text().catch(() => '')
+        alert(
+          `Yükləmə uğursuz (${putRes.status}).\n${putText.slice(0, 200) || 'Supabase cavabı boşdur'}`
+        )
+        return null
+      }
+
+      const signErr = await signRes.json().catch(() => ({}))
+
+      // 2) Köhnə server yükləməsi (yalnız kiçik fayllar — Vercel limiti)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', type)
 
       const response = await fetch('/api/admin/upload', {
         method: 'POST',
@@ -349,12 +413,12 @@ export default function AdminPage() {
         }
 
         return data.path
-      } else {
-        const error = await response.json().catch(() => ({}))
-        const msg = [error.error, error.detail].filter(Boolean).join('\n')
-        alert(msg || 'Fayl yüklənərkən xəta baş verdi')
-        return null
       }
+
+      const fallbackErr = await response.json().catch(() => ({}))
+      const msg = [signErr.error, signErr.detail, fallbackErr.error, fallbackErr.detail].filter(Boolean).join('\n')
+      alert(msg || 'Fayl yüklənərkən xəta baş verdi')
+      return null
     } catch (error) {
       console.error('Upload error:', error)
       alert('Fayl yüklənərkən xəta baş verdi')

@@ -6,7 +6,7 @@ const TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24
 
 function getCookieValue(token: string, maxAge: number): string {
   const secure = process.env.NODE_ENV === 'production' ? ' Secure;' : ''
-  return `${COOKIE_NAME}=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=${maxAge}`
+  return `${COOKIE_NAME}=${token}; HttpOnly;${secure} SameSite=Lax; Path=/; Max-Age=${maxAge}`
 }
 
 export async function POST(request: NextRequest) {
