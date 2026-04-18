@@ -282,6 +282,9 @@ export default function AdminPage() {
   const handleDeleteVideo = async (slug: string) => {
     if (!confirm('Bu videonu silmək istədiyinizə əminsiniz?')) return
 
+    const previous = videos
+    setVideos((v) => v.filter((x) => x.slug !== slug))
+
     try {
       const url = new URL('/api/admin/videos', window.location.origin)
       url.searchParams.set('slug', slug)
@@ -292,15 +295,20 @@ export default function AdminPage() {
       })
 
       if (response.ok) {
-        fetchVideos()
-        router.refresh()
+        const data = await response.json().catch(() => ({}))
+        if (Array.isArray(data.videos)) {
+          setVideos(data.videos)
+        }
+        void router.refresh()
       } else {
+        setVideos(previous)
         const data = await response.json().catch(() => ({}))
         const msg = [data.error, data.detail].filter(Boolean).join('\n')
         alert(msg || 'Xəta baş verdi')
       }
     } catch (error) {
       console.error('Error deleting video:', error)
+      setVideos(previous)
       alert('Xəta baş verdi')
     }
   }

@@ -141,7 +141,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Save failed', detail: saved.error }, { status: 500 })
     }
 
-    return NextResponse.json({ message: 'Video deleted successfully' }, { status: 200 })
+    return NextResponse.json(
+      { message: 'Video deleted successfully', videos: filteredVideos },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('Error deleting video:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

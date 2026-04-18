@@ -17,35 +17,36 @@ function supabaseConfig() {
   return { url, key, bucket }
 }
 
+async function tryFetchVideosJson(url: string, headers?: HeadersInit): Promise<Video[] | null> {
+  try {
+    const res = await fetch(url, { cache: 'no-store', headers })
+    if (!res.ok) return null
+    const data = JSON.parse(await res.text())
+    return Array.isArray(data) ? (data as Video[]) : null
+  } catch (e) {
+    console.error('[videosStore] fetch failed', url.slice(0, 80), e)
+    return null
+  }
+}
+
 /**
- * Load videos: Supabase public JSON when configured, else local data/videos.json.
+ * Load videos: Supabase public + authed JSON oxunu paralel (sürət üçün), sonra repo faylı.
  */
 export async function loadVideos(): Promise<Video[]> {
   const cfg = supabaseConfig()
   if (cfg) {
     const pubUrl = `${cfg.url}/storage/v1/object/public/${cfg.bucket}/${VIDEOS_SITE_JSON_PATH}`
-    try {
-      const res = await fetch(pubUrl, { cache: 'no-store' })
-      if (res.ok) {
-        const data = JSON.parse(await res.text())
-        if (Array.isArray(data)) return data as Video[]
-      }
-    } catch (e) {
-      console.error('[videosStore] public read failed', e)
-    }
-    try {
-      const authUrl = `${cfg.url}/storage/v1/object/${cfg.bucket}/${VIDEOS_SITE_JSON_PATH}`
-      const res = await fetch(authUrl, {
-        headers: { Authorization: `Bearer ${cfg.key}`, apikey: cfg.key },
-        cache: 'no-store',
-      })
-      if (res.ok) {
-        const data = JSON.parse(await res.text())
-        if (Array.isArray(data)) return data as Video[]
-      }
-    } catch (e) {
-      console.error('[videosStore] authed read failed', e)
-    }
+    const authUrl = `${cfg.url}/storage/v1/object/${cfg.bucket}/${VIDEOS_SITE_JSON_PATH}`
+    const authHeaders = { Authorization: `Bearer ${cfg.key}`, apikey: cfg.key }
+
+    const [fromPublic, fromAuthed] = await Promise.all([
+      tryFetchVideosJson(pubUrl),
+      tryFetchVideosJson(authUrl, authHeaders),
+    ])
+
+    // Authed cavab CDN keşindən təzə olur; public bəzən köhnə qala bilər
+    if (fromAuthed !== null) return fromAuthed
+    if (fromPublic !== null) return fromPublic
   }
 
   const p = repoVideosPath()
