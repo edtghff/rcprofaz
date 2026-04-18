@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Əlaqə',
-  description: 'RC PROF ilə əlaqə saxlayın. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə konsultasiya və xidmətlər. Telefon: +994 55 998 19 85. Çinar Plaza, Bakı.',
+  description: 'RC PROF ilə əlaqə saxlayın. Bakıda tikinti, təmir, dizayn, lift, qapı və şüşə sistemləri üzrə konsultasiya və xidmətlər. Telefon: +994 55 223 90 87. Çinar Park Biznes Mərkəzi.',
   keywords: [
     'RC PROF əlaqə',
     'tikinti şirkəti əlaqə Bakı',

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
 import path from 'path'
-import { writeFile } from 'fs/promises'
 
 function verifyAuth(request: NextRequest): boolean {
   const token = request.cookies.get('admin_token')?.value
@@ -14,6 +12,50 @@ function verifyAuth(request: NextRequest): boolean {
   } catch {
     return false
   }
+}
+
+async function ensureSupabaseBucket(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  bucket: string
+): Promise<void> {
+  const baseUrl = supabaseUrl.replace(/\/$/, '')
+  const headers = {
+    Authorization: `Bearer ${serviceRoleKey}`,
+    apikey: serviceRoleKey,
+  }
+
+  const getBucketResponse = await fetch(`${baseUrl}/storage/v1/bucket/${bucket}`, {
+    method: 'GET',
+    headers,
+  })
+
+  if (getBucketResponse.ok) return
+
+  const body = await getBucketResponse.text()
+  // If bucket does not exist, create a public bucket so uploaded media URLs are reachable from the site.
+  if (!getBucketResponse.ok && body.includes('Bucket not found')) {
+    const createBucketResponse = await fetch(`${baseUrl}/storage/v1/bucket`, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: bucket,
+        name: bucket,
+        public: true,
+      }),
+    })
+
+    if (!createBucketResponse.ok) {
+      const createBody = await createBucketResponse.text()
+      throw new Error(`Failed to create bucket "${bucket}": ${createBody}`)
+    }
+    return
+  }
+
+  throw new Error(`Failed to access bucket "${bucket}": ${body}`)
 }
 
 export async function POST(request: NextRequest) {
@@ -41,75 +83,76 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
     }
 
-    // Determine upload directory based on type
-    let uploadDir: string
-    let fileName: string
-    const isVercel = process.env.VERCEL === '1'
+    const supabaseUrl = process.env.SUPABASE_URL
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'media'
 
-    if (type === 'video-thumbnail' || type === 'blog-image') {
-      if (!isImage) {
-        return NextResponse.json({ error: 'Expected image file' }, { status: 400 })
-      }
-      // On Vercel, files are temporary, so we return a URL or use a CDN
-      // For now, we'll save to /tmp and return a note that files need to be uploaded to public folder
-      if (isVercel) {
-        // On Vercel, we can't write to public folder, so we'll save to /tmp
-        // and return instructions or use a different approach
-        uploadDir = path.join('/tmp', type === 'video-thumbnail' ? 'videos' : 'blogs')
-      } else {
-        uploadDir = type === 'video-thumbnail' 
-          ? path.join(process.cwd(), 'public', 'images', 'videos')
-          : path.join(process.cwd(), 'public', 'images', 'blogs')
-      }
-      
-      const ext = path.extname(file.name)
-      fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      return NextResponse.json(
+        { error: 'Supabase env vars are not configured' },
+        { status: 500 }
+      )
+    }
+
+    await ensureSupabaseBucket(supabaseUrl, supabaseServiceRoleKey, bucket)
+
+    // Protect serverless memory and request timeout for mobile uploads.
+    const maxImageSize = 10 * 1024 * 1024 // 10 MB
+    const maxVideoSize = 120 * 1024 * 1024 // 120 MB
+    if (isImage && file.size > maxImageSize) {
+      return NextResponse.json({ error: 'Image is too large (max 10MB)' }, { status: 400 })
+    }
+    if (isVideo && file.size > maxVideoSize) {
+      return NextResponse.json({ error: 'Video is too large (max 120MB)' }, { status: 400 })
+    }
+
+    let folder: string
+    if (type === 'video-thumbnail') {
+      if (!isImage) return NextResponse.json({ error: 'Expected image file' }, { status: 400 })
+      folder = 'images/videos'
+    } else if (type === 'blog-image') {
+      if (!isImage) return NextResponse.json({ error: 'Expected image file' }, { status: 400 })
+      folder = 'images/blogs'
     } else if (type === 'video-file') {
-      if (!isVideo) {
-        return NextResponse.json({ error: 'Expected video file' }, { status: 400 })
-      }
-      if (isVercel) {
-        uploadDir = path.join('/tmp', 'videos')
-      } else {
-        uploadDir = path.join(process.cwd(), 'public', 'videos')
-      }
-      const ext = path.extname(file.name)
-      fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`
+      if (!isVideo) return NextResponse.json({ error: 'Expected video file' }, { status: 400 })
+      folder = 'videos'
     } else {
       return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 })
     }
 
-    // Ensure directory exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
-    }
-
-    const filePath = path.join(uploadDir, fileName)
+    const ext = path.extname(file.name) || (isImage ? '.jpg' : '.mp4')
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`
+    const objectPath = `${folder}/${fileName}`
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    await writeFile(filePath, buffer)
+    const uploadUrl = `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/${bucket}/${objectPath}`
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${supabaseServiceRoleKey}`,
+        apikey: supabaseServiceRoleKey,
+        'x-upsert': 'true',
+        'Content-Type': file.type || (isImage ? 'image/jpeg' : 'video/mp4'),
+      },
+      body: buffer,
+    })
 
-    // Return relative path
-    let relativePath: string
-    if (isVercel) {
-      // On Vercel, files in /tmp are temporary
-      // Return a path that indicates the file needs to be moved to public folder
-      // For production, you might want to use a CDN or object storage
-      relativePath = type === 'video-thumbnail' 
-        ? `/images/videos/${fileName}`
-        : type === 'blog-image'
-        ? `/images/blogs/${fileName}`
-        : `/videos/${fileName}`
-    } else {
-      relativePath = filePath.replace(path.join(process.cwd(), 'public'), '')
+    if (!uploadResponse.ok) {
+      const errorBody = await uploadResponse.text()
+      console.error('Supabase upload error:', errorBody)
+      return NextResponse.json(
+        { error: 'Failed to upload to Supabase Storage' },
+        { status: 500 }
+      )
     }
+
+    const publicPath = `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${objectPath}`
     
     return NextResponse.json({ 
       success: true, 
-      path: relativePath,
+      path: publicPath,
       fileName: fileName,
-      note: isVercel ? 'File saved to /tmp. For production, consider using a CDN or object storage.' : undefined
     }, { status: 200 })
 
   } catch (error) {

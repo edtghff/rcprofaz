@@ -108,8 +108,8 @@ export const navData: NavItem[] = [
   },
 ];
 
-export const contactPhone = '+994 55 998 19 85';
-export const contactPhoneRaw = '994559981985';
+export const contactPhone = '+994 55 223 90 87';
+export const contactPhoneRaw = '994552239087';
 export const contactAddress = 'Çinar Park Biznes Mərkəzi';
 export const contactEmail = 'info@rcprof.az';
 

@@ -6,7 +6,7 @@ interface Video {
   slug: string
   title: string
   description: string
-  videoUrl: string
+  videoUrl?: string
   thumbnail?: string
   category?: string
   date: string
@@ -119,10 +119,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const video: Video = await request.json()
-    
-    // Validate required fields
-    if (!video.slug || !video.title || !video.description || !video.videoUrl || !video.date) {
+    const raw = await request.json()
+    const video: Video = {
+      ...raw,
+      videoUrl: typeof raw.videoUrl === 'string' ? raw.videoUrl.trim() : '',
+    }
+
+    if (!video.slug || !video.title || !video.description || !video.date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -163,7 +166,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
     }
 
-    videos[index] = { ...videos[index], ...updatedVideo, slug }
+    const merged = { ...videos[index], ...updatedVideo, slug }
+    if (typeof merged.videoUrl === 'string') {
+      merged.videoUrl = merged.videoUrl.trim()
+    }
+    videos[index] = merged
     writeVideos(videos)
 
     return NextResponse.json({ message: 'Video updated successfully', video: videos[index] }, { status: 200 })

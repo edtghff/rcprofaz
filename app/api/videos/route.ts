@@ -6,7 +6,7 @@ interface Video {
   slug: string
   title: string
   description: string
-  videoUrl: string
+  videoUrl?: string
   thumbnail?: string
   category?: string
   date: string

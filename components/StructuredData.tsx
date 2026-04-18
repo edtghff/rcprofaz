@@ -18,7 +18,7 @@ export default function StructuredData() {
     },
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+994-55-998-19-85',
+      telephone: '+994-55-223-90-87',
       email: 'info@rcprof.az',
       contactType: 'customer service',
       areaServed: 'AZ',
