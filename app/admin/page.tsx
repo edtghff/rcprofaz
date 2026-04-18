@@ -32,13 +32,15 @@ export default function AdminPage() {
   const [password, setPassword] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
   const [error, setError] = useState('')
-  const [showVideoForm, setShowVideoForm] = useState(false)
+  const [showVideoForm, setShowVideoForm] = useState(true)
   const [showBlogForm, setShowBlogForm] = useState(false)
   const [editingVideo, setEditingVideo] = useState<Video | null>(null)
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null)
   const [uploadingVideoThumbnail, setUploadingVideoThumbnail] = useState(false)
   const [uploadingVideoFile, setUploadingVideoFile] = useState(false)
   const [uploadingBlogImage, setUploadingBlogImage] = useState(false)
+  const [videoSuccess, setVideoSuccess] = useState('')
+  const [showOptionalVideoLink, setShowOptionalVideoLink] = useState(false)
 
   // Form states
   const [videoForm, setVideoForm] = useState<Partial<Video>>({
@@ -83,6 +85,12 @@ export default function AdminPage() {
   useEffect(() => {
     checkAuth()
   }, [])
+
+  useEffect(() => {
+    if (!videoSuccess) return
+    const t = setTimeout(() => setVideoSuccess(''), 8000)
+    return () => clearTimeout(t)
+  }, [videoSuccess])
 
   const checkAuth = async () => {
     try {
@@ -177,6 +185,7 @@ export default function AdminPage() {
 
   const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const wasEditing = Boolean(editingVideo)
     try {
       const url = '/api/admin/videos'
       const method = editingVideo ? 'PUT' : 'POST'
@@ -197,7 +206,6 @@ export default function AdminPage() {
       })
 
       if (response.ok) {
-        setShowVideoForm(false)
         setEditingVideo(null)
         setVideoForm({
           slug: '',
@@ -207,6 +215,13 @@ export default function AdminPage() {
           thumbnail: '',
           date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
         })
+        setVideoSuccess(
+          wasEditing
+            ? 'Dəyişikliklər yadda saxlanıldı.'
+            : 'Sayta əlavə olundu. «Videolar» səhifəsində dərhal görünür (brauzer keşini yeniləyin).'
+        )
+        setShowOptionalVideoLink(false)
+        if (wasEditing) setShowVideoForm(false)
         fetchVideos()
         router.refresh()
       } else {
@@ -324,13 +339,13 @@ export default function AdminPage() {
 
       if (response.ok) {
         const data = await response.json()
-        
+
         if (type === 'video-thumbnail') {
-          setVideoForm({ ...videoForm, thumbnail: data.path })
+          setVideoForm((prev) => ({ ...prev, thumbnail: data.path }))
         } else if (type === 'video-file') {
-          setVideoForm({ ...videoForm, videoUrl: data.path })
+          setVideoForm((prev) => ({ ...prev, videoUrl: data.path }))
         } else if (type === 'blog-image') {
-          setBlogForm({ ...blogForm, image: data.path })
+          setBlogForm((prev) => ({ ...prev, image: data.path }))
         }
 
         return data.path
@@ -443,10 +458,16 @@ export default function AdminPage() {
             {/* Videos Tab */}
             {activeTab === 'videos' && (
               <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-medium text-gray-900">Videolar</h2>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+                  <div>
+                    <h2 className="text-xl font-medium text-gray-900">Videolar</h2>
+                    <p className="text-sm text-gray-500 font-light mt-1">
+                      Əvvəlcə şəkil və ya video faylı toxunmaqla yükləyin, sonra başlıq yazıb «Sayta əlavə et» düyməsinə basın.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
                     <button
+                      type="button"
                       onClick={() => {
                         setEditingVideo(null)
                         setVideoForm({
@@ -457,133 +478,157 @@ export default function AdminPage() {
                           thumbnail: '',
                           date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
                         })
+                        setVideoSuccess('')
+                        setShowOptionalVideoLink(false)
                         setShowVideoForm(true)
                       }}
-                      className="text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 px-4 py-2 transition-colors"
+                      className="text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 px-4 py-3 sm:py-2 transition-colors min-h-[44px]"
                     >
-                      + Yeni Video
+                      Formu təmizlə
                     </button>
                     <button
+                      type="button"
                       onClick={fetchVideos}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 px-4 py-2 border border-gray-300 hover:bg-gray-50 transition-colors"
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 px-4 py-3 sm:py-2 border border-gray-300 hover:bg-gray-50 transition-colors min-h-[44px]"
                     >
-                      Yenilə
+                      Siyahını yenilə
                     </button>
                   </div>
                 </div>
 
                 {showVideoForm && (
-                  <div className="bg-white border border-gray-200 p-6 mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      {editingVideo ? 'Videonu redaktə et' : 'Yeni video əlavə et'}
+                  <div className="bg-white border border-gray-200 p-4 sm:p-6 mb-6 max-w-xl mx-auto sm:mx-0 sm:max-w-none">
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      {editingVideo ? 'Redaktə' : 'Sayta əlavə et'}
                     </h3>
-                    <form onSubmit={handleVideoSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-900 mb-2">Başlıq</label>
+                    {!editingVideo && (
+                      <p className="text-sm text-gray-500 font-light mb-4">Mobil üçün: böyük düymələrə toxunun, fayl seçin.</p>
+                    )}
+                    {videoSuccess && (
+                      <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm px-4 py-3" role="status">
+                        {videoSuccess}
+                      </div>
+                    )}
+                    <form onSubmit={handleVideoSubmit} className="space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label className="flex flex-col items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-gray-300 hover:border-gray-900 hover:bg-gray-50 transition-colors px-4 py-8 text-center min-h-[120px]">
+                          <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-900">
+                            {uploadingVideoThumbnail ? 'Yüklənir…' : '1. Kapak şəkli'}
+                          </span>
+                          <span className="text-xs text-gray-500 font-light">PNG, JPG, HEIC</span>
+                          <input
+                            type="file"
+                            accept="image/*,.heic,.heif"
+                            multiple={false}
+                            className="sr-only"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleFileUpload(file, 'video-thumbnail')
+                              e.target.value = ''
+                            }}
+                            disabled={uploadingVideoThumbnail}
+                          />
+                        </label>
+                        <label className="flex flex-col items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-gray-300 hover:border-gray-900 hover:bg-gray-50 transition-colors px-4 py-8 text-center min-h-[120px]">
+                          <svg className="w-10 h-10 text-gray-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                          <span className="text-sm font-medium text-gray-900">
+                            {uploadingVideoFile ? 'Yüklənir…' : '2. Video faylı (istəyə bağlı)'}
+                          </span>
+                          <span className="text-xs text-gray-500 font-light">MP4, MOV… və ya boş saxlayın</span>
+                          <input
+                            type="file"
+                            accept="video/*,.mp4,.webm,.mov,.m4v"
+                            multiple={false}
+                            className="sr-only"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleFileUpload(file, 'video-file')
+                              e.target.value = ''
+                            }}
+                            disabled={uploadingVideoFile}
+                          />
+                        </label>
+                      </div>
+                      {(videoForm.thumbnail || videoForm.videoUrl) && (
+                        <p className="text-xs text-gray-600">
+                          {videoForm.thumbnail && <span className="mr-3">Kapak: ✓</span>}
+                          {videoForm.videoUrl && <span>Video: ✓</span>}
+                        </p>
+                      )}
+                      {videoForm.thumbnail && (
+                        <div className="rounded border border-gray-200 overflow-hidden w-full max-w-xs aspect-video relative bg-gray-100">
+                          <img src={videoForm.thumbnail} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Başlıq</label>
+                        <input
+                          type="text"
+                          value={videoForm.title || ''}
+                          onChange={(e) => {
+                            setVideoSuccess('')
+                            setVideoForm({ ...videoForm, title: e.target.value })
+                          }}
+                          placeholder="Məsələn: Lift quraşdırılması"
+                          className="w-full px-4 py-3 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-base"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">Qısa təsvir</label>
+                        <textarea
+                          value={videoForm.description || ''}
+                          onChange={(e) => {
+                            setVideoSuccess('')
+                            setVideoForm({ ...videoForm, description: e.target.value })
+                          }}
+                          className="w-full px-4 py-3 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-base"
+                          rows={3}
+                          placeholder="İstəyə bağlı"
+                        />
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setShowOptionalVideoLink((v) => !v)}
+                          className="text-sm text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                        >
+                          {showOptionalVideoLink ? 'YouTube / linki gizlət' : 'YouTube və ya link əlavə et (istəyə bağlı)'}
+                        </button>
+                        {showOptionalVideoLink && (
                           <input
                             type="text"
-                            value={videoForm.title || ''}
-                            onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
+                            value={videoForm.videoUrl || ''}
+                            onChange={(e) => {
+                              setVideoSuccess('')
+                              setVideoForm({ ...videoForm, videoUrl: e.target.value })
+                            }}
+                            placeholder="https://youtube.com/... və ya birbaşa video URL"
+                            className="w-full mt-2 px-4 py-3 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-base"
                           />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-900 mb-2">Təsvir</label>
-                          <textarea
-                            value={videoForm.description || ''}
-                            onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
-                            rows={3}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-900 mb-2">Video linki (istəyə bağlı)</label>
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              value={videoForm.videoUrl || ''}
-                              onChange={(e) => setVideoForm({ ...videoForm, videoUrl: e.target.value })}
-                              placeholder="Boş buraxa bilərsiniz — yalnız şəkil üçün"
-                              className="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
-                            />
-                            <div className="flex items-center gap-2">
-                              <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700">
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                {uploadingVideoFile ? 'Yüklənir...' : 'Video faylı yüklə'}
-                                <input
-                                  type="file"
-                                  accept="video/*,.mp4,.webm,.mov,.m4v"
-                                  multiple={false}
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0]
-                                    if (file) handleFileUpload(file, 'video-file')
-                                  }}
-                                  disabled={uploadingVideoFile}
-                                />
-                              </label>
-                              {videoForm.videoUrl && (
-                                <span className="text-xs text-gray-500">✓ Fayl yükləndi</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-900 mb-2">Thumbnail</label>
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              value={videoForm.thumbnail || ''}
-                              onChange={(e) => setVideoForm({ ...videoForm, thumbnail: e.target.value })}
-                              placeholder="/images/videos/video.jpg"
-                              className="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-sm"
-                            />
-                            <div className="flex items-center gap-2">
-                              <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700">
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {uploadingVideoThumbnail ? 'Yüklənir...' : 'Şəkil yüklə'}
-                                <input
-                                  type="file"
-                                  accept="image/*,.heic,.heif"
-                                  multiple={false}
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0]
-                                    if (file) handleFileUpload(file, 'video-thumbnail')
-                                  }}
-                                  disabled={uploadingVideoThumbnail}
-                                />
-                              </label>
-                              {videoForm.thumbnail && (
-                                <span className="text-xs text-gray-500">✓ Şəkil yükləndi</span>
-                              )}
-                            </div>
-                            {videoForm.thumbnail && (
-                              <div className="mt-2">
-                                <img src={videoForm.thumbnail} alt="Preview" className="max-w-xs h-32 object-cover border border-gray-200 rounded" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        )}
                       </div>
-                      <div className="flex gap-2">
-                        <button type="submit" className="btn-primary px-6 py-2">
-                          {editingVideo ? 'Yadda saxla' : 'Əlavə et'}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                        <button
+                          type="submit"
+                          className="btn-primary w-full sm:w-auto px-6 py-4 text-base font-medium min-h-[52px]"
+                        >
+                          {editingVideo ? 'Yadda saxla' : 'Sayta əlavə et'}
                         </button>
                         <button
                           type="button"
                           onClick={() => {
                             setShowVideoForm(false)
                             setEditingVideo(null)
+                            setVideoSuccess('')
                           }}
-                          className="px-6 py-2 border border-gray-300 hover:bg-gray-50 transition-colors"
+                          className="w-full sm:w-auto px-6 py-4 border border-gray-300 hover:bg-gray-50 transition-colors min-h-[52px]"
                         >
-                          Ləğv et
+                          Bağla
                         </button>
                       </div>
                     </form>
@@ -608,6 +653,8 @@ export default function AdminPage() {
                               onClick={() => {
                                 setEditingVideo(video)
                                 setVideoForm(video)
+                                setVideoSuccess('')
+                                setShowOptionalVideoLink(Boolean((video.videoUrl || '').trim()))
                                 setShowVideoForm(true)
                               }}
                               className="text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-1 border border-gray-300 hover:bg-gray-50 transition-colors"

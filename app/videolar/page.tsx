@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Video, isPlayableVideoUrl } from '@/data/videosData'
+import { isPlayableVideoUrl } from '@/data/videosData'
+import { loadVideos } from '@/lib/videosStore'
+
+/** Siyahı Supabase-dən gəlir; statik keşdə boş qalmaması üçün */
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Videolar',
@@ -22,34 +26,8 @@ export const metadata = {
   },
 }
 
-async function getVideos(): Promise<Video[]> {
-  try {
-    // Use absolute URL for server-side fetch
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-    const host = process.env.VERCEL_URL || 'localhost:3000'
-    const baseUrl = `${protocol}://${host}`
-    const res = await fetch(`${baseUrl}/api/videos`, { cache: 'no-store' })
-    if (res.ok) {
-      const data = await res.json()
-      return data.videos || []
-    }
-  } catch (error) {
-    // Fallback: try localhost if VERCEL_URL is not available
-    try {
-      const res = await fetch('http://localhost:3000/api/videos', { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        return data.videos || []
-      }
-    } catch {
-      // If both fail, return empty array
-    }
-  }
-  return []
-}
-
 export default async function VideolarPage() {
-  const videosData = await getVideos()
+  const videosData = await loadVideos()
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}

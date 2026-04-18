@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { loadVideos, saveVideos } from '@/lib/videosStore'
 
 interface Video {
   slug: string
@@ -13,12 +12,6 @@ interface Video {
   duration?: string
 }
 
-const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production'
-// Primary source: data/videos.json (in repo, read-only on Vercel)
-const repoDataPath = path.join(process.cwd(), 'data', 'videos.json')
-// Temporary storage: /tmp/videos.json (writable on Vercel, but not persistent)
-const tmpDataPath = path.join('/tmp', 'videos.json')
-
 function verifyAuth(request: NextRequest): boolean {
   const token = request.cookies.get('admin_token')?.value
   if (!token) return false
@@ -26,85 +19,19 @@ function verifyAuth(request: NextRequest): boolean {
     const decoded = Buffer.from(token, 'base64').toString('utf-8')
     const [timestamp] = decoded.split('-')
     const tokenAge = Date.now() - parseInt(timestamp)
-    return tokenAge < 86400000 // 24 hours
+    return tokenAge < 86400000
   } catch {
     return false
   }
 }
 
-function readVideos(): Video[] {
-  // Try to read from /tmp first (has latest changes)
-  if (fs.existsSync(tmpDataPath)) {
-    try {
-      const fileContent = fs.readFileSync(tmpDataPath, 'utf-8')
-      const videos = JSON.parse(fileContent)
-      if (Array.isArray(videos)) {
-        return videos
-      }
-    } catch (error) {
-      console.error('Error reading from /tmp:', error)
-    }
-  }
-  
-  // Fallback to repo data file
-  if (fs.existsSync(repoDataPath)) {
-    try {
-      const fileContent = fs.readFileSync(repoDataPath, 'utf-8')
-      const videos = JSON.parse(fileContent)
-      
-      // On Vercel, initialize /tmp with repo data if /tmp doesn't exist
-      if (isVercel && !fs.existsSync(tmpDataPath) && Array.isArray(videos)) {
-        try {
-          const tmpDir = path.dirname(tmpDataPath)
-          if (!fs.existsSync(tmpDir)) {
-            fs.mkdirSync(tmpDir, { recursive: true })
-          }
-          fs.writeFileSync(tmpDataPath, JSON.stringify(videos, null, 2), 'utf-8')
-        } catch (error) {
-          console.error('Error initializing /tmp from repo:', error)
-        }
-      }
-      
-      return videos
-    } catch (error) {
-      console.error('Error reading from repo:', error)
-    }
-  }
-  
-  return []
-}
-
-function writeVideos(videos: Video[]): void {
-  try {
-    // Always write to /tmp (works on Vercel)
-    const tmpDir = path.dirname(tmpDataPath)
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true })
-    }
-    fs.writeFileSync(tmpDataPath, JSON.stringify(videos, null, 2), 'utf-8')
-    
-    // Also try to write to repo data file (works locally, read-only on Vercel)
-    if (!isVercel) {
-      const repoDir = path.dirname(repoDataPath)
-      if (!fs.existsSync(repoDir)) {
-        fs.mkdirSync(repoDir, { recursive: true })
-      }
-      fs.writeFileSync(repoDataPath, JSON.stringify(videos, null, 2), 'utf-8')
-    }
-  } catch (error) {
-    console.error('Error writing videos:', error)
-    // Don't throw - at least /tmp write should succeed
-  }
-}
-
-// GET - Get all videos
 export async function GET(request: NextRequest) {
   if (!verifyAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    const videos = readVideos()
+    const videos = await loadVideos()
     return NextResponse.json({ videos }, { status: 200 })
   } catch (error) {
     console.error('Error fetching videos:', error)
@@ -112,7 +39,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new video
 export async function POST(request: NextRequest) {
   if (!verifyAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -136,15 +62,17 @@ export async function POST(request: NextRequest) {
       videoUrl: typeof raw.videoUrl === 'string' ? raw.videoUrl.trim() : '',
     }
 
-    const videos = readVideos()
-    
-    // Check if slug already exists
-    if (videos.some(v => v.slug === video.slug)) {
+    const videos = await loadVideos()
+
+    if (videos.some((v) => v.slug === video.slug)) {
       return NextResponse.json({ error: 'Video with this slug already exists' }, { status: 400 })
     }
 
     videos.push(video)
-    writeVideos(videos)
+    const saved = await saveVideos(videos)
+    if (!saved.ok) {
+      return NextResponse.json({ error: 'Save failed', detail: saved.error }, { status: 500 })
+    }
 
     return NextResponse.json({ message: 'Video created successfully', video }, { status: 201 })
   } catch (error) {
@@ -153,7 +81,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update video
 export async function PUT(request: NextRequest) {
   if (!verifyAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -161,14 +88,14 @@ export async function PUT(request: NextRequest) {
 
   try {
     const { slug, ...updatedVideo } = await request.json()
-    
+
     if (!slug) {
       return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
     }
 
-    const videos = readVideos()
-    const index = videos.findIndex(v => v.slug === slug)
-    
+    const videos = await loadVideos()
+    const index = videos.findIndex((v) => v.slug === slug)
+
     if (index === -1) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
     }
@@ -178,7 +105,10 @@ export async function PUT(request: NextRequest) {
       merged.videoUrl = merged.videoUrl.trim()
     }
     videos[index] = merged
-    writeVideos(videos)
+    const saved = await saveVideos(videos)
+    if (!saved.ok) {
+      return NextResponse.json({ error: 'Save failed', detail: saved.error }, { status: 500 })
+    }
 
     return NextResponse.json({ message: 'Video updated successfully', video: videos[index] }, { status: 200 })
   } catch (error) {
@@ -187,7 +117,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete video
 export async function DELETE(request: NextRequest) {
   if (!verifyAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -196,19 +125,22 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const slug = searchParams.get('slug')
-    
+
     if (!slug) {
       return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
     }
 
-    const videos = readVideos()
-    const filteredVideos = videos.filter(v => v.slug !== slug)
-    
+    const videos = await loadVideos()
+    const filteredVideos = videos.filter((v) => v.slug !== slug)
+
     if (videos.length === filteredVideos.length) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
     }
 
-    writeVideos(filteredVideos)
+    const saved = await saveVideos(filteredVideos)
+    if (!saved.ok) {
+      return NextResponse.json({ error: 'Save failed', detail: saved.error }, { status: 500 })
+    }
 
     return NextResponse.json({ message: 'Video deleted successfully' }, { status: 200 })
   } catch (error) {
@@ -216,4 +148,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
-

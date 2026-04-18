@@ -1,41 +1,20 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import { Video, isPlayableVideoUrl, isLikelyImageUrl } from '@/data/videosData'
+import { isPlayableVideoUrl, isLikelyImageUrl } from '@/data/videosData'
 import Breadcrumbs from '@/components/Breadcrumbs'
+import { loadVideos } from '@/lib/videosStore'
 
-async function getVideos(): Promise<Video[]> {
-  try {
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-    const host = process.env.VERCEL_URL || 'localhost:3000'
-    const baseUrl = `${protocol}://${host}`
-    const res = await fetch(`${baseUrl}/api/videos`, { cache: 'no-store' })
-    if (res.ok) {
-      const data = await res.json()
-      return data.videos || []
-    }
-  } catch (error) {
-    try {
-      const res = await fetch('http://localhost:3000/api/videos', { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        return data.videos || []
-      }
-    } catch {
-      // If both fail, return empty array
-    }
-  }
-  return []
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateStaticParams() {
-  const videos = await getVideos()
+  const videos = await loadVideos()
   return videos.map((video) => ({
     slug: video.slug,
   }))
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const videos = await getVideos()
+  const videos = await loadVideos()
   const video = videos.find((v) => v.slug === params.slug)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rcprof.az'
   
@@ -74,7 +53,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function VideoDetailPage({ params }: { params: { slug: string } }) {
-  const videos = await getVideos()
+  const videos = await loadVideos()
   const video = videos.find((v) => v.slug === params.slug)
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rcprof.az'
 

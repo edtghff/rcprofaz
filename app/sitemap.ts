@@ -3,32 +3,23 @@ import { navData } from '@/data/navData'
 import { servicesData } from '@/data/servicesData'
 import { productsData } from '@/data/productsData'
 import { projectsData } from '@/data/projectsData'
+import { loadVideos } from '@/lib/videosStore'
 import fs from 'fs'
 import path from 'path'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = 'force-dynamic'
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rcprof.az'
-  
-  // Read videos and blogs from JSON files
+
+  const videos = await loadVideos()
+
   const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production'
-  const videosFilePath = isVercel
-    ? path.join('/tmp', 'videos.json')
-    : path.join(process.cwd(), 'data', 'videos.json')
   const blogsFilePath = isVercel
     ? path.join('/tmp', 'blogs.json')
     : path.join(process.cwd(), 'data', 'blogs.json')
 
-  let videos: any[] = []
   let blogs: any[] = []
-  
-  try {
-    if (fs.existsSync(videosFilePath)) {
-      const content = fs.readFileSync(videosFilePath, 'utf-8')
-      videos = JSON.parse(content)
-    }
-  } catch {
-    // Ignore errors
-  }
   
   try {
     if (fs.existsSync(blogsFilePath)) {
