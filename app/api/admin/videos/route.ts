@@ -123,15 +123,14 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const { searchParams } = new URL(request.url)
-    const slug = searchParams.get('slug')
+    const slug = request.nextUrl.searchParams.get('slug')?.trim()
 
     if (!slug) {
       return NextResponse.json({ error: 'Slug is required' }, { status: 400 })
     }
 
     const videos = await loadVideos()
-    const filteredVideos = videos.filter((v) => v.slug !== slug)
+    const filteredVideos = videos.filter((v) => (v.slug || '').trim() !== slug)
 
     if (videos.length === filteredVideos.length) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })

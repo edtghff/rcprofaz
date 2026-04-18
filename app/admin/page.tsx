@@ -281,9 +281,12 @@ export default function AdminPage() {
 
   const handleDeleteVideo = async (slug: string) => {
     if (!confirm('Bu videonu silmək istədiyinizə əminsiniz?')) return
-    
+
     try {
-      const response = await fetch(`/api/admin/videos?slug=${slug}`, {
+      const url = new URL('/api/admin/videos', window.location.origin)
+      url.searchParams.set('slug', slug)
+
+      const response = await fetch(url.toString(), {
         method: 'DELETE',
         credentials: 'include',
       })
@@ -292,7 +295,9 @@ export default function AdminPage() {
         fetchVideos()
         router.refresh()
       } else {
-        alert('Xəta baş verdi')
+        const data = await response.json().catch(() => ({}))
+        const msg = [data.error, data.detail].filter(Boolean).join('\n')
+        alert(msg || 'Xəta baş verdi')
       }
     } catch (error) {
       console.error('Error deleting video:', error)
@@ -302,9 +307,12 @@ export default function AdminPage() {
 
   const handleDeleteBlog = async (slug: string) => {
     if (!confirm('Bu blogu silmək istədiyinizə əminsiniz?')) return
-    
+
     try {
-      const response = await fetch(`/api/admin/blogs?slug=${slug}`, {
+      const url = new URL('/api/admin/blogs', window.location.origin)
+      url.searchParams.set('slug', slug)
+
+      const response = await fetch(url.toString(), {
         method: 'DELETE',
         credentials: 'include',
       })
@@ -313,7 +321,9 @@ export default function AdminPage() {
         fetchBlogs()
         router.refresh()
       } else {
-        alert('Xəta baş verdi')
+        const data = await response.json().catch(() => ({}))
+        const msg = [data.error, data.detail].filter(Boolean).join('\n')
+        alert(msg || 'Xəta baş verdi')
       }
     } catch (error) {
       console.error('Error deleting blog:', error)

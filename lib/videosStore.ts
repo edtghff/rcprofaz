@@ -69,15 +69,16 @@ export async function saveVideos(videos: Video[]): Promise<{ ok: true } | { ok: 
 
   if (cfg) {
     const uploadUrl = `${cfg.url}/storage/v1/object/${cfg.bucket}/${VIDEOS_SITE_JSON_PATH}`
+    // application/json bəzi Storage konfiqlərində rədd olunur; məzmun UTF-8 JSON olaraq octet-stream göndərilir
     const res = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${cfg.key}`,
         apikey: cfg.key,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/octet-stream',
         'x-upsert': 'true',
       },
-      body,
+      body: Buffer.from(body, 'utf-8'),
     })
     if (!res.ok) {
       const t = await res.text()
