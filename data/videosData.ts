@@ -10,11 +10,13 @@ export interface Video {
   duration?: string
 }
 
+import { isYouTubeUrl } from '@/lib/youtube'
+
 /** Реальное видео (показываем play / плеер), не фото */
 export function isPlayableVideoUrl(url: string | undefined | null): boolean {
   const u = (url || '').trim()
   if (!u) return false
-  if (/youtube\.com|youtu\.be|vimeo\.com/i.test(u)) return true
+  if (isYouTubeUrl(u) || /vimeo\.com/i.test(u)) return true
   if (/\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(u.split('?')[0])) return true
   if (/\/videos\//i.test(u)) return true
   return false

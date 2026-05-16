@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadViaSignedToken } from '@/lib/supabaseBrowserUpload'
+import { enrichVideoRecord } from '@/lib/videoRecord'
+import { isYouTubeUrl, youtubeThumbnailUrl } from '@/lib/youtube'
 
 interface Video {
   slug: string
@@ -41,10 +43,12 @@ export default function AdminPage() {
   const [uploadingVideoFile, setUploadingVideoFile] = useState(false)
   const [uploadingBlogImage, setUploadingBlogImage] = useState(false)
   const [videoSuccess, setVideoSuccess] = useState('')
-  const [showOptionalVideoLink, setShowOptionalVideoLink] = useState(false)
+  /** YouTube link (ayrıca — fayl yükləməsi ilə qarışmır) */
+  const [youtubeLink, setYoutubeLink] = useState('')
+  /** Supabase-ə yüklənmiş video faylının URL-i */
+  const [uploadedFileUrl, setUploadedFileUrl] = useState('')
 
-  // Form states
-  const [videoForm, setVideoForm] = useState<Partial<Video>>({
+  const emptyVideoForm = (): Partial<Video> => ({
     slug: '',
     title: '',
     description: '',
@@ -52,6 +56,48 @@ export default function AdminPage() {
     thumbnail: '',
     date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
   })
+
+  const resetVideoFormFields = () => {
+    setVideoForm(emptyVideoForm())
+    setYoutubeLink('')
+    setUploadedFileUrl('')
+  }
+
+  const loadVideoIntoForm = (video: Video) => {
+    const url = (video.videoUrl || '').trim()
+    if (isYouTubeUrl(url)) {
+      setYoutubeLink(url)
+      setUploadedFileUrl('')
+    } else {
+      setYoutubeLink('')
+      setUploadedFileUrl(url)
+    }
+    setVideoForm({
+      slug: video.slug,
+      title: video.title,
+      description: video.description,
+      thumbnail: video.thumbnail || '',
+      date: video.date,
+      videoUrl: '',
+    })
+  }
+
+  const buildVideoForSave = (form: Partial<Video>) => {
+    const videoUrl = youtubeLink.trim() || uploadedFileUrl.trim()
+    return enrichVideoRecord({
+      slug: form.slug || makeSlug(form.title || ''),
+      title: form.title || '',
+      description: form.description || '',
+      date:
+        form.date ||
+        new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
+      videoUrl,
+      thumbnail: form.thumbnail || '',
+    })
+  }
+
+  // Form states
+  const [videoForm, setVideoForm] = useState<Partial<Video>>(emptyVideoForm())
 
   const [blogForm, setBlogForm] = useState<Partial<Blog>>({
     slug: '',
@@ -190,14 +236,15 @@ export default function AdminPage() {
     try {
       const url = '/api/admin/videos'
       const method = editingVideo ? 'PUT' : 'POST'
+      const built = buildVideoForSave(videoForm)
+      if (!built.videoUrl?.trim() && !built.thumbnail?.trim()) {
+        alert('YouTube linki və ya kapak şəkli əlavə edin.')
+        return
+      }
+
       const preparedVideo = editingVideo
-        ? { slug: editingVideo.slug, ...videoForm, videoUrl: (videoForm.videoUrl ?? '').trim() }
-        : {
-            ...videoForm,
-            slug: makeSlug(videoForm.title || ''),
-            date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
-            videoUrl: (videoForm.videoUrl ?? '').trim(),
-          }
+        ? { ...built, slug: editingVideo.slug }
+        : { ...built, slug: makeSlug(built.title || '') }
       
       const response = await fetch(url, {
         method,
@@ -208,20 +255,12 @@ export default function AdminPage() {
 
       if (response.ok) {
         setEditingVideo(null)
-        setVideoForm({
-          slug: '',
-          title: '',
-          description: '',
-          videoUrl: '',
-          thumbnail: '',
-          date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
-        })
+        resetVideoFormFields()
         setVideoSuccess(
           wasEditing
             ? 'Dəyişikliklər yadda saxlanıldı.'
             : 'Sayta əlavə olundu. «Videolar» səhifəsində dərhal görünür (brauzer keşini yeniləyin).'
         )
-        setShowOptionalVideoLink(false)
         if (wasEditing) setShowVideoForm(false)
         fetchVideos()
         router.refresh()
@@ -378,7 +417,7 @@ export default function AdminPage() {
           if (type === 'video-thumbnail') {
             setVideoForm((prev) => ({ ...prev, thumbnail: publicUrl }))
           } else if (type === 'video-file') {
-            setVideoForm((prev) => ({ ...prev, videoUrl: publicUrl }))
+            setUploadedFileUrl(publicUrl)
           } else if (type === 'blog-image') {
             setBlogForm((prev) => ({ ...prev, image: publicUrl }))
           }
@@ -408,7 +447,7 @@ export default function AdminPage() {
         if (type === 'video-thumbnail') {
           setVideoForm((prev) => ({ ...prev, thumbnail: data.path }))
         } else if (type === 'video-file') {
-          setVideoForm((prev) => ({ ...prev, videoUrl: data.path }))
+          setUploadedFileUrl(data.path)
         } else if (type === 'blog-image') {
           setBlogForm((prev) => ({ ...prev, image: data.path }))
         }
@@ -527,7 +566,7 @@ export default function AdminPage() {
                   <div>
                     <h2 className="text-xl font-medium text-gray-900">Videolar</h2>
                     <p className="text-sm text-gray-500 font-light mt-1">
-                      Əvvəlcə şəkil və ya video faylı toxunmaqla yükləyin, sonra başlıq yazıb «Sayta əlavə et» düyməsinə basın.
+                      YouTube linki və ya fayl yükləyin, başlıq yazın, «Sayta əlavə et» basın.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 shrink-0">
@@ -535,16 +574,8 @@ export default function AdminPage() {
                       type="button"
                       onClick={() => {
                         setEditingVideo(null)
-                        setVideoForm({
-                          slug: '',
-                          title: '',
-                          description: '',
-                          videoUrl: '',
-                          thumbnail: '',
-                          date: new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
-                        })
+                        resetVideoFormFields()
                         setVideoSuccess('')
-                        setShowOptionalVideoLink(false)
                         setShowVideoForm(true)
                       }}
                       className="text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 px-4 py-3 sm:py-2 transition-colors min-h-[44px]"
@@ -575,6 +606,30 @@ export default function AdminPage() {
                       </div>
                     )}
                     <form onSubmit={handleVideoSubmit} className="space-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-2">YouTube linki</label>
+                        <input
+                          type="url"
+                          value={youtubeLink}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setYoutubeLink(v)
+                            setVideoSuccess('')
+                            const autoThumb = youtubeThumbnailUrl(v)
+                            if (autoThumb) {
+                              setVideoForm((prev) => ({
+                                ...prev,
+                                thumbnail: prev.thumbnail || autoThumb,
+                              }))
+                            }
+                          }}
+                          placeholder="https://www.youtube.com/watch?v=... və ya youtu.be/..."
+                          className="w-full px-4 py-3 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-base"
+                        />
+                        <p className="text-xs text-gray-500 mt-1 font-light">
+                          Yalnız link kifayətdir — önizləmə avtomatik götürülür.
+                        </p>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <label className="flex flex-col items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-gray-300 hover:border-gray-900 hover:bg-gray-50 transition-colors px-4 py-8 text-center min-h-[120px]">
                           <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -621,10 +676,11 @@ export default function AdminPage() {
                           />
                         </label>
                       </div>
-                      {(videoForm.thumbnail || videoForm.videoUrl) && (
+                      {(videoForm.thumbnail || youtubeLink || uploadedFileUrl) && (
                         <p className="text-xs text-gray-600">
                           {videoForm.thumbnail && <span className="mr-3">Kapak: ✓</span>}
-                          {videoForm.videoUrl && <span>Video: ✓</span>}
+                          {youtubeLink.trim() && <span className="mr-3">YouTube: ✓</span>}
+                          {uploadedFileUrl && <span>Fayl: ✓</span>}
                         </p>
                       )}
                       {videoForm.thumbnail && (
@@ -657,27 +713,6 @@ export default function AdminPage() {
                           rows={3}
                           placeholder="İstəyə bağlı"
                         />
-                      </div>
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setShowOptionalVideoLink((v) => !v)}
-                          className="text-sm text-gray-700 underline underline-offset-2 hover:text-gray-900"
-                        >
-                          {showOptionalVideoLink ? 'YouTube / linki gizlət' : 'YouTube və ya link əlavə et (istəyə bağlı)'}
-                        </button>
-                        {showOptionalVideoLink && (
-                          <input
-                            type="text"
-                            value={videoForm.videoUrl || ''}
-                            onChange={(e) => {
-                              setVideoSuccess('')
-                              setVideoForm({ ...videoForm, videoUrl: e.target.value })
-                            }}
-                            placeholder="https://youtube.com/... və ya birbaşa video URL"
-                            className="w-full mt-2 px-4 py-3 border border-gray-300 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 outline-none text-base"
-                          />
-                        )}
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <button
@@ -719,9 +754,8 @@ export default function AdminPage() {
                             <button
                               onClick={() => {
                                 setEditingVideo(video)
-                                setVideoForm(video)
+                                loadVideoIntoForm(video)
                                 setVideoSuccess('')
-                                setShowOptionalVideoLink(Boolean((video.videoUrl || '').trim()))
                                 setShowVideoForm(true)
                               }}
                               className="text-sm font-medium text-gray-700 hover:text-gray-900 px-3 py-1 border border-gray-300 hover:bg-gray-50 transition-colors"

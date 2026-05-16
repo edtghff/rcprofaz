@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { isPlayableVideoUrl } from '@/data/videosData'
 import { loadVideos } from '@/lib/videosStore'
+import { videoListThumbnail } from '@/lib/videoRecord'
 
 /** Siyahı Supabase-dən gəlir; statik keşdə boş qalmaması üçün */
 export const dynamic = 'force-dynamic'
@@ -50,6 +51,7 @@ export default async function VideolarPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {videosData.map((video) => {
                 const showPlay = isPlayableVideoUrl(video.videoUrl)
+                const listThumb = videoListThumbnail(video)
                 return (
                 <Link
                   key={video.slug}
@@ -57,9 +59,9 @@ export default async function VideolarPage() {
                   className="group block bg-white overflow-hidden hover:shadow-md transition-all border border-gray-200 hover:border-gray-900"
                 >
                   <div className="relative aspect-video bg-gray-200 overflow-hidden">
-                    {video.thumbnail ? (
+                    {listThumb ? (
                       <Image
-                        src={video.thumbnail}
+                        src={listThumb}
                         alt={video.title}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"

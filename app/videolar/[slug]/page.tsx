@@ -3,6 +3,8 @@ import Image from 'next/image'
 import { isPlayableVideoUrl, isLikelyImageUrl } from '@/data/videosData'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { loadVideos } from '@/lib/videosStore'
+import { videoListThumbnail } from '@/lib/videoRecord'
+import { isYouTubeUrl, youtubeEmbedUrl } from '@/lib/youtube'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,12 +65,13 @@ export default async function VideoDetailPage({ params }: { params: { slug: stri
 
   const mediaUrl = (video.videoUrl || '').trim()
   const playable = isPlayableVideoUrl(mediaUrl)
-  const displayImage = video.thumbnail || (isLikelyImageUrl(mediaUrl) ? mediaUrl : '')
+  const displayImage =
+    videoListThumbnail(video) || (isLikelyImageUrl(mediaUrl) ? mediaUrl : '')
 
-  const absThumb = video.thumbnail
-    ? /^https?:\/\//i.test(video.thumbnail)
-      ? video.thumbnail
-      : `${siteUrl.replace(/\/$/, '')}${video.thumbnail.startsWith('/') ? video.thumbnail : `/${video.thumbnail}`}`
+  const absThumb = displayImage
+    ? /^https?:\/\//i.test(displayImage)
+      ? displayImage
+      : `${siteUrl.replace(/\/$/, '')}${displayImage.startsWith('/') ? displayImage : `/${displayImage}`}`
     : undefined
 
   const structuredData = playable
@@ -81,15 +84,10 @@ export default async function VideoDetailPage({ params }: { params: { slug: stri
         uploadDate: video.date,
         duration: video.duration,
         contentUrl: mediaUrl,
-        embedUrl:
-          mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')
-            ? mediaUrl.replace(
-                /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/,
-                'https://www.youtube.com/embed/$1'
-              )
-            : mediaUrl.includes('vimeo.com')
-              ? mediaUrl.replace(/vimeo.com\/(\d+)/, 'https://player.vimeo.com/video/$1')
-              : mediaUrl,
+        embedUrl: youtubeEmbedUrl(mediaUrl) ||
+          (mediaUrl.includes('vimeo.com')
+            ? mediaUrl.replace(/vimeo.com\/(\d+)/, 'https://player.vimeo.com/video/$1')
+            : mediaUrl),
         publisher: {
           '@type': 'Organization',
           name: 'RC PROF',
@@ -104,15 +102,12 @@ export default async function VideoDetailPage({ params }: { params: { slug: stri
         image: displayImage || undefined,
       }
 
-  const isYouTube = mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')
+  const isYouTube = isYouTubeUrl(mediaUrl)
   const isVimeo = mediaUrl.includes('vimeo.com')
 
   let embedUrl = mediaUrl
   if (isYouTube) {
-    const youtubeId = mediaUrl.match(
-      /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/
-    )?.[1]
-    embedUrl = youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : mediaUrl
+    embedUrl = youtubeEmbedUrl(mediaUrl) || mediaUrl
   } else if (isVimeo) {
     const vimeoId = mediaUrl.match(/vimeo.com\/(\d+)/)?.[1]
     embedUrl = vimeoId ? `https://player.vimeo.com/video/${vimeoId}` : mediaUrl

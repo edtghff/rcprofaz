@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { enrichVideoRecord } from '@/lib/videoRecord'
 import { loadVideos, saveVideos } from '@/lib/videosStore'
 
 interface Video {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     const descIn = typeof raw.description === 'string' ? raw.description.trim() : ''
     const dateIn = typeof raw.date === 'string' ? raw.date.trim() : ''
 
-    const video: Video = {
+    const video = enrichVideoRecord({
       ...raw,
       slug: slugIn || `media-${Date.now()}`,
       title: titleIn || 'Adsız',
@@ -60,7 +61,8 @@ export async function POST(request: NextRequest) {
         dateIn ||
         new Date().toLocaleDateString('az-AZ', { year: 'numeric', month: 'long', day: 'numeric' }),
       videoUrl: typeof raw.videoUrl === 'string' ? raw.videoUrl.trim() : '',
-    }
+      thumbnail: typeof raw.thumbnail === 'string' ? raw.thumbnail.trim() : '',
+    })
 
     const videos = await loadVideos()
 
@@ -100,10 +102,19 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
     }
 
-    const merged = { ...videos[index], ...updatedVideo, slug }
-    if (typeof merged.videoUrl === 'string') {
-      merged.videoUrl = merged.videoUrl.trim()
-    }
+    const merged = enrichVideoRecord({
+      ...videos[index],
+      ...updatedVideo,
+      slug,
+      videoUrl:
+        typeof updatedVideo.videoUrl === 'string'
+          ? updatedVideo.videoUrl.trim()
+          : videos[index].videoUrl,
+      thumbnail:
+        typeof updatedVideo.thumbnail === 'string'
+          ? updatedVideo.thumbnail.trim()
+          : videos[index].thumbnail,
+    })
     videos[index] = merged
     const saved = await saveVideos(videos)
     if (!saved.ok) {
