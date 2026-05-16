@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import {
   createSignedUploadUrlRest,
   ensureSupabaseBucket,
+  maxImageBytes,
+  maxVideoBytes,
   publicObjectUrl,
   validateUploadMeta,
 } from '@/lib/adminStorageShared'
@@ -106,8 +108,11 @@ export async function POST(request: NextRequest) {
       signedUrl,
       token,
       path: path || validated.objectPath,
+      bucket: cfg.bucket,
       publicUrl,
       cacheControl: '3600',
+      maxVideoMb: Math.round(maxVideoBytes() / (1024 * 1024)),
+      maxImageMb: Math.round(maxImageBytes() / (1024 * 1024)),
     })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Server error'

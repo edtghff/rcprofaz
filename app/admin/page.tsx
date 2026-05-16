@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { uploadViaSignedToken } from '@/lib/supabaseBrowserUpload'
 
 interface Video {
   slug: string
@@ -360,35 +361,20 @@ export default function AdminPage() {
 
       if (signRes.ok) {
         const sign = await signRes.json()
-        const { signedUrl, publicUrl, cacheControl } = sign as {
-          signedUrl: string
+        const { token, path, bucket, publicUrl } = sign as {
+          token: string
+          path: string
+          bucket: string
           publicUrl: string
-          cacheControl?: string
         }
 
-        const fd = new FormData()
-        fd.append('cacheControl', cacheControl || '3600')
-        fd.append('', file)
-
-        let putRes = await fetch(signedUrl, {
-          method: 'PUT',
-          body: fd,
-          mode: 'cors',
-        })
-
-        if (!putRes.ok) {
-          putRes = await fetch(signedUrl, {
-            method: 'PUT',
-            headers: {
-              'cache-control': `max-age=${cacheControl || '3600'}`,
-              'Content-Type': file.type || 'application/octet-stream',
-            },
-            body: file,
-            mode: 'cors',
-          })
+        if (!token || !path || !bucket) {
+          alert('Yükləmə konfiqurasiyası natamamdır. Səhifəni yeniləyin.')
+          return null
         }
 
-        if (putRes.ok) {
+        const uploaded = await uploadViaSignedToken(bucket, path, token, file)
+        if (uploaded.ok) {
           if (type === 'video-thumbnail') {
             setVideoForm((prev) => ({ ...prev, thumbnail: publicUrl }))
           } else if (type === 'video-file') {
@@ -399,10 +385,7 @@ export default function AdminPage() {
           return publicUrl
         }
 
-        const putText = await putRes.text().catch(() => '')
-        alert(
-          `Yükləmə uğursuz (${putRes.status}).\n${putText.slice(0, 200) || 'Supabase cavabı boşdur'}`
-        )
+        alert(uploaded.message)
         return null
       }
 
@@ -621,7 +604,9 @@ export default function AdminPage() {
                           <span className="text-sm font-medium text-gray-900">
                             {uploadingVideoFile ? 'Yüklənir…' : '2. Video faylı (istəyə bağlı)'}
                           </span>
-                          <span className="text-xs text-gray-500 font-light">MP4, MOV… və ya boş saxlayın</span>
+                          <span className="text-xs text-gray-500 font-light">
+                            MP4, MOV… (Supabase limiti, adətən ≤50 MB)
+                          </span>
                           <input
                             type="file"
                             accept="video/*,.mp4,.webm,.mov,.m4v"

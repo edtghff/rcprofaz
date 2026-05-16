@@ -31,6 +31,20 @@ const allowedVideoTypes = new Set([
 
 export type UploadKind = 'video-thumbnail' | 'video-file' | 'blog-image'
 
+function envMb(name: string, fallbackMb: number): number {
+  const n = Number(process.env[name])
+  return Number.isFinite(n) && n > 0 ? n : fallbackMb
+}
+
+/** Supabase global limit adətən 50 MB; Dashboard-da artırıla bilər */
+export function maxVideoBytes(): number {
+  return envMb('SUPABASE_MAX_VIDEO_MB', 50) * 1024 * 1024
+}
+
+export function maxImageBytes(): number {
+  return envMb('SUPABASE_MAX_IMAGE_MB', 25) * 1024 * 1024
+}
+
 export type ValidatedUpload =
   | { ok: true; folder: string; objectPath: string; isImage: boolean; isVideo: boolean; contentType: string }
   | { ok: false; status: number; error: string; detail?: string }
@@ -65,13 +79,21 @@ export function validateUploadMeta(
     }
   }
 
-  const maxImageSize = 25 * 1024 * 1024
-  const maxVideoSize = 500 * 1024 * 1024
+  const maxImageSize = maxImageBytes()
+  const maxVideoSize = maxVideoBytes()
   if (isImage && fileSize > maxImageSize) {
-    return { ok: false, status: 400, error: 'Şəkil çox böyükdür (maks. 25 MB)' }
+    const mb = Math.round(maxImageSize / (1024 * 1024))
+    return { ok: false, status: 400, error: `Şəkil çox böyükdür (maks. ${mb} MB)` }
   }
   if (isVideo && fileSize > maxVideoSize) {
-    return { ok: false, status: 400, error: 'Video çox böyükdür (maks. 500 MB)' }
+    const mb = Math.round(maxVideoSize / (1024 * 1024))
+    return {
+      ok: false,
+      status: 400,
+      error: `Video çox böyükdür (maks. ${mb} MB)`,
+      detail:
+        'Supabase → Storage → Settings → Global file size limit. Vercel-də SUPABASE_MAX_VIDEO_MB ilə uyğunlaşdırın.',
+    }
   }
 
   let folder: string
