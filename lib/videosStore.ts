@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Video } from '@/data/videosData'
+import { getSupabaseServerEnv } from '@/lib/supabaseServer'
 
 /** Supabase Storage path inside bucket (single JSON CMS file) */
 export const VIDEOS_SITE_JSON_PATH = 'site/videos.json'
@@ -10,11 +11,9 @@ function repoVideosPath() {
 }
 
 function supabaseConfig() {
-  const url = process.env.SUPABASE_URL?.replace(/\/$/, '')
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'media'
-  if (!url || !key) return null
-  return { url, key, bucket }
+  const env = getSupabaseServerEnv()
+  if (!env) return null
+  return { url: env.url, key: env.serviceRoleKey, bucket: env.bucket }
 }
 
 async function tryFetchVideosJson(url: string, headers?: HeadersInit): Promise<Video[] | null> {

@@ -47,9 +47,6 @@ function classifyFile(fileName: string, mime: string): { isImage: boolean; isVid
   return { isImage, isVideo }
 }
 
-/**
- * Validates metadata for an upload (direct-to-Supabase or server proxy).
- */
 export function validateUploadMeta(
   fileName: string,
   mime: string,
@@ -120,34 +117,78 @@ export async function ensureSupabaseBucket(
     apikey: serviceRoleKey,
   }
 
-  const getBucketResponse = await fetch(`${baseUrl}/storage/v1/bucket/${bucket}`, {
-    method: 'GET',
-    headers,
-  })
-
-  if (getBucketResponse.ok) return
-
-  const body = await getBucketResponse.text()
-  if (!getBucketResponse.ok && body.includes('Bucket not found')) {
-    const createBucketResponse = await fetch(`${baseUrl}/storage/v1/bucket`, {
-      method: 'POST',
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: bucket,
-        name: bucket,
-        public: true,
-      }),
+  try {
+    const getBucketResponse = await fetch(`${baseUrl}/storage/v1/bucket/${bucket}`, {
+      method: 'GET',
+      headers,
     })
 
-    if (!createBucketResponse.ok) {
-      const createBody = await createBucketResponse.text()
-      throw new Error(`Failed to create bucket "${bucket}": ${createBody}`)
+    if (getBucketResponse.ok) return
+
+    const body = await getBucketResponse.text()
+    if (body.includes('Bucket not found')) {
+      const createBucketResponse = await fetch(`${baseUrl}/storage/v1/bucket`, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: bucket,
+          name: bucket,
+          public: true,
+        }),
+      })
+
+      if (!createBucketResponse.ok) {
+        const createBody = await createBucketResponse.text()
+        console.error(`[ensureSupabaseBucket] create failed: ${createBody}`)
+      }
+      return
     }
-    return
+
+    console.warn(`[ensureSupabaseBucket] GET bucket ${bucket}: ${body.slice(0, 200)}`)
+  } catch (e) {
+    console.error('[ensureSupabaseBucket]', e)
+  }
+}
+
+/** REST fallback when @supabase/supabase-js createSignedUploadUrl fails */
+export async function createSignedUploadUrlRest(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  bucket: string,
+  objectPath: string
+): Promise<{ signedUrl: string; token: string; path: string } | null> {
+  const baseUrl = supabaseUrl.replace(/\/$/, '')
+  const storageBase = `${baseUrl}/storage/v1`
+  const signPath = `${bucket}/${objectPath}`
+
+  const res = await fetch(`${storageBase}/object/upload/sign/${signPath}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: serviceRoleKey,
+      'x-upsert': 'true',
+    },
+  })
+
+  if (!res.ok) {
+    console.error('[createSignedUploadUrlRest]', await res.text())
+    return null
   }
 
-  throw new Error(`Failed to access bucket "${bucket}": ${body}`)
+  const data = (await res.json()) as { url?: string }
+  const relative = data.url || ''
+  if (!relative) return null
+
+  const signedUrl = relative.startsWith('http')
+    ? relative
+    : `${storageBase}${relative.startsWith('/') ? relative : `/${relative}`}`
+
+  const url = new URL(signedUrl)
+  const token = url.searchParams.get('token')
+  if (!token) return null
+
+  return { signedUrl: url.toString(), token, path: objectPath }
 }

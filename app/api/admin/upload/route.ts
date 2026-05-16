@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureSupabaseBucket, publicObjectUrl, validateUploadMeta } from '@/lib/adminStorageShared'
+import { getSupabaseServerEnv } from '@/lib/supabaseServer'
 
 function verifyAuth(request: NextRequest): boolean {
   const token = request.cookies.get('admin_token')?.value
@@ -40,25 +41,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'media'
-
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-      return NextResponse.json({ error: 'Supabase env vars are not configured' }, { status: 500 })
+    const cfg = getSupabaseServerEnv()
+    if (!cfg) {
+      return NextResponse.json(
+        {
+          error: 'Supabase not configured',
+          detail: 'SUPABASE_URL və SUPABASE_SERVICE_ROLE_KEY Vercel-də təyin olunmalıdır',
+        },
+        { status: 503 }
+      )
     }
 
-    await ensureSupabaseBucket(supabaseUrl, supabaseServiceRoleKey, bucket)
+    await ensureSupabaseBucket(cfg.url, cfg.serviceRoleKey, cfg.bucket)
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    const uploadUrl = `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/${bucket}/${validated.objectPath}`
+    const uploadUrl = `${cfg.url}/storage/v1/object/${cfg.bucket}/${validated.objectPath}`
     const uploadResponse = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${supabaseServiceRoleKey}`,
-        apikey: supabaseServiceRoleKey,
+        Authorization: `Bearer ${cfg.serviceRoleKey}`,
+        apikey: cfg.serviceRoleKey,
         'x-upsert': 'true',
         'Content-Type': validated.contentType,
       },
@@ -74,7 +78,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const publicPath = publicObjectUrl(supabaseUrl, bucket, validated.objectPath)
+    const publicPath = publicObjectUrl(cfg.url, cfg.bucket, validated.objectPath)
 
     return NextResponse.json({
       success: true,

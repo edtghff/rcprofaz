@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import {
+  createSignedUploadUrlRest,
   ensureSupabaseBucket,
   publicObjectUrl,
   validateUploadMeta,
 } from '@/lib/adminStorageShared'
+import { getSupabaseServerEnv } from '@/lib/supabaseServer'
 
 function verifyAuth(request: NextRequest): boolean {
   const token = request.cookies.get('admin_token')?.value
@@ -19,10 +21,6 @@ function verifyAuth(request: NextRequest): boolean {
   }
 }
 
-/**
- * Returns a signed upload URL so the browser can PUT the file directly to Supabase
- * (bypasses Vercel ~4.5MB request body limit for serverless).
- */
 export async function POST(request: NextRequest) {
   if (!verifyAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -47,45 +45,74 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'media'
-
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-      return NextResponse.json({ error: 'Supabase env vars are not configured' }, { status: 500 })
+    const cfg = getSupabaseServerEnv()
+    if (!cfg) {
+      return NextResponse.json(
+        {
+          error: 'Supabase not configured',
+          detail:
+            'Vercel → Settings → Environment Variables: SUPABASE_URL və SUPABASE_SERVICE_ROLE_KEY əlavə edin, sonra Redeploy.',
+        },
+        { status: 503 }
+      )
     }
 
-    await ensureSupabaseBucket(supabaseUrl, supabaseServiceRoleKey, bucket)
+    await ensureSupabaseBucket(cfg.url, cfg.serviceRoleKey, cfg.bucket)
 
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    let signedUrl: string | undefined
+    let token: string | undefined
+    let path: string | undefined
+
+    const supabase = createClient(cfg.url, cfg.serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
 
     const { data, error } = await supabase.storage
-      .from(bucket)
+      .from(cfg.bucket)
       .createSignedUploadUrl(validated.objectPath, { upsert: true })
 
-    if (error || !data) {
-      console.error('[upload-sign]', error)
+    if (data?.signedUrl && data.token) {
+      signedUrl = data.signedUrl
+      token = data.token
+      path = data.path
+    } else {
+      if (error) console.error('[upload-sign] SDK:', error.message)
+      const rest = await createSignedUploadUrlRest(
+        cfg.url,
+        cfg.serviceRoleKey,
+        cfg.bucket,
+        validated.objectPath
+      )
+      if (rest) {
+        signedUrl = rest.signedUrl
+        token = rest.token
+        path = rest.path
+      }
+    }
+
+    if (!signedUrl || !token) {
       return NextResponse.json(
-        { error: 'Could not create upload URL', detail: error?.message },
+        {
+          error: 'Could not create upload URL',
+          detail: error?.message || 'Supabase Storage imza URL-i yaradılmadı',
+        },
         { status: 500 }
       )
     }
 
-    const publicUrl = publicObjectUrl(supabaseUrl, bucket, validated.objectPath)
+    const publicUrl = publicObjectUrl(cfg.url, cfg.bucket, validated.objectPath)
 
     return NextResponse.json({
-      signedUrl: data.signedUrl,
-      token: data.token,
-      path: data.path,
+      signedUrl,
+      token,
+      path: path || validated.objectPath,
       publicUrl,
-      /** Echo for client FormData upload */
       cacheControl: '3600',
     })
   } catch (e) {
+    const message = e instanceof Error ? e.message : 'Server error'
     console.error('[upload-sign]', e)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Server error', detail: message }, { status: 500 })
   }
 }
 
