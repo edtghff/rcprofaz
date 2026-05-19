@@ -16,6 +16,27 @@ function supabaseConfig() {
   return { url: env.url, key: env.serviceRoleKey, bucket: env.bucket }
 }
 
+function readLocalVideos(): Video[] {
+  const p = repoVideosPath()
+  if (!fs.existsSync(p)) return []
+  try {
+    const data = JSON.parse(fs.readFileSync(p, 'utf-8'))
+    return Array.isArray(data) ? (data as Video[]) : []
+  } catch {
+    return []
+  }
+}
+
+function mergeVideosBySlug(...lists: Video[][]): Video[] {
+  const bySlug = new Map<string, Video>()
+  for (const list of lists) {
+    for (const v of list) {
+      if (v?.slug) bySlug.set(v.slug, v)
+    }
+  }
+  return Array.from(bySlug.values())
+}
+
 async function tryFetchVideosJson(url: string, headers?: HeadersInit): Promise<Video[] | null> {
   try {
     const res = await fetch(url, { cache: 'no-store', headers })
@@ -32,7 +53,10 @@ async function tryFetchVideosJson(url: string, headers?: HeadersInit): Promise<V
  * Load videos: Supabase public + authed JSON oxunu paralel (sürət üçün), sonra repo faylı.
  */
 export async function loadVideos(): Promise<Video[]> {
+  const local = readLocalVideos()
   const cfg = supabaseConfig()
+  let remote: Video[] = []
+
   if (cfg) {
     const pubUrl = `${cfg.url}/storage/v1/object/public/${cfg.bucket}/${VIDEOS_SITE_JSON_PATH}`
     const authUrl = `${cfg.url}/storage/v1/object/${cfg.bucket}/${VIDEOS_SITE_JSON_PATH}`
@@ -43,21 +67,12 @@ export async function loadVideos(): Promise<Video[]> {
       tryFetchVideosJson(authUrl, authHeaders),
     ])
 
-    // Authed cavab CDN keşindən təzə olur; public bəzən köhnə qala bilər
-    if (fromAuthed !== null) return fromAuthed
-    if (fromPublic !== null) return fromPublic
+    if (fromAuthed !== null) remote = fromAuthed
+    else if (fromPublic !== null) remote = fromPublic
   }
 
-  const p = repoVideosPath()
-  if (fs.existsSync(p)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(p, 'utf-8'))
-      return Array.isArray(data) ? (data as Video[]) : []
-    } catch {
-      return []
-    }
-  }
-  return []
+  // Repo public/videos + data/videos.json həmişə göstərilir; Supabase admin yazıları üstə yazılır
+  return mergeVideosBySlug(local, remote)
 }
 
 /**
