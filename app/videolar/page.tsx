@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import VideoPreview from '@/components/VideoPreview'
 import { isPlayableVideoUrl } from '@/data/videosData'
 import { loadVideos } from '@/lib/videosStore'
 import { videoListThumbnail } from '@/lib/videoRecord'
@@ -52,19 +53,27 @@ export default async function VideolarPage() {
               {videosData.map((video) => {
                 const showPlay = isPlayableVideoUrl(video.videoUrl)
                 const listThumb = videoListThumbnail(video)
+                const videoSrc =
+                  showPlay && !listThumb ? (video.videoUrl || '').trim() : ''
                 return (
                 <Link
                   key={video.slug}
                   href={`/videolar/${video.slug}`}
                   className="group block bg-white overflow-hidden hover:shadow-md transition-all border border-gray-200 hover:border-gray-900"
+                  aria-label={video.title || 'Video'}
                 >
                   <div className="relative aspect-video bg-gray-200 overflow-hidden">
                     {listThumb ? (
                       <Image
                         src={listThumb}
-                        alt={video.title}
+                        alt=""
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : videoSrc ? (
+                      <VideoPreview
+                        src={videoSrc}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
@@ -92,20 +101,6 @@ export default async function VideolarPage() {
                           </svg>
                         </div>
                       </div>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    {video.category && (
-                      <span className="text-xs text-gray-500 font-medium mb-2 block">{video.category}</span>
-                    )}
-                    <h2 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-gray-800 transition-colors">
-                      {video.title}
-                    </h2>
-                    <p className="text-gray-600 text-sm leading-relaxed font-light line-clamp-2 mb-3">
-                      {video.description}
-                    </p>
-                    {video.date && (
-                      <span className="text-xs text-gray-500 font-light">{video.date}</span>
                     )}
                   </div>
                 </Link>
